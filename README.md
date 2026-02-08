@@ -1,4 +1,4 @@
-# Claude Code ↔ Figma Bridge
+# Claude Code ↔ Figma Bridge ↔ Figma/Figjam
 
 A real-time bridge that enables Claude Code to create, modify, and manipulate design elements directly on Figma canvases through natural language commands.
 
