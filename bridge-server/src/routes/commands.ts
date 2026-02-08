@@ -1,0 +1,139 @@
+import { Router, type Request, type Response, type Router as RouterType } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import type { FigmaCommand, CommandPayload, CommandType } from '@figma-claude-bridge/shared';
+import { queue } from '../services/queue.js';
+import { broadcast } from '../services/websocket.js';
+import { extractWebsiteCSS } from '../services/websiteExtractor.js';
+
+const router: RouterType = Router();
+
+// POST /commands - Queue a new command (called by Claude Code)
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const { type, target, payload } = req.body as {
+      type?: CommandType | 'extractWebsiteCSS';
+      target?: string;
+      payload?: CommandPayload & { url?: string };
+    };
+
+    if (!type) {
+      res.status(400).json({ error: 'Missing required field: type' });
+      return;
+    }
+
+    // Handle server-side commands (not sent to Figma plugin)
+    if (type === 'extractWebsiteCSS') {
+      const commandId = uuidv4();
+      console.log(`[Commands] Processing server-side command: ${type} (${commandId})`);
+
+      if (!payload?.url) {
+        res.status(400).json({ error: 'Missing required field: payload.url' });
+        return;
+      }
+
+      // Extract screenshot options from payload
+      const extractionOptions = {
+        captureScreenshot: (payload as any).captureScreenshot ?? false,
+        screenshotFullPage: (payload as any).screenshotFullPage ?? false,
+        viewport: (payload as any).viewport,
+      };
+
+      // Run extraction asynchronously but return immediately with commandId
+      res.status(202).json({
+        success: true,
+        commandId,
+        message: 'Extraction started. Poll /results/{commandId}?wait=true for results.',
+      });
+
+      // Run extraction and store result
+      try {
+        const result = await extractWebsiteCSS(payload.url, extractionOptions);
+        queue.addResult({
+          commandId,
+          success: result.success,
+          timestamp: Date.now(),
+          data: result,
+        });
+      } catch (error) {
+        queue.addResult({
+          commandId,
+          success: false,
+          timestamp: Date.now(),
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      return;
+    }
+
+    // Create command with generated ID
+    const command: FigmaCommand = {
+      id: uuidv4(),
+      type,
+      target,
+      payload: payload || ({} as CommandPayload),
+      timestamp: Date.now(),
+    };
+
+    queue.addCommand(command);
+
+    // Broadcast command received event
+    broadcast({
+      type: 'command_received',
+      commandId: command.id,
+      message: `Command queued: ${type}`,
+      timestamp: Date.now(),
+    });
+
+    res.status(201).json({
+      success: true,
+      commandId: command.id,
+      message: 'Command queued successfully',
+    });
+  } catch (error) {
+    console.error('[Commands] Error queuing command:', error);
+    res.status(500).json({ error: 'Failed to queue command' });
+  }
+});
+
+// GET /commands - Poll for pending commands (called by Figma plugin)
+router.get('/', (_req: Request, res: Response) => {
+  try {
+    const commands = queue.getPendingCommands();
+    res.json({ commands });
+  } catch (error) {
+    console.error('[Commands] Error getting commands:', error);
+    res.status(500).json({ error: 'Failed to get commands' });
+  }
+});
+
+// GET /commands/poll - Long polling for commands (called by Figma plugin)
+// This holds the connection open until a command arrives or timeout
+router.get('/poll', async (req: Request, res: Response) => {
+  try {
+    const timeout = parseInt(req.query.timeout as string) || 30000;
+    const commands = await queue.waitForCommands(Math.min(timeout, 55000));
+    res.json({ commands });
+  } catch (error) {
+    console.error('[Commands] Error in long poll:', error);
+    res.status(500).json({ error: 'Failed to poll commands' });
+  }
+});
+
+// DELETE /commands/:id - Cancel a pending command
+router.delete('/:id', (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const cancelled = queue.cancelCommand(id);
+
+    if (cancelled) {
+      res.json({ success: true, message: 'Command cancelled' });
+    } else {
+      res.status(404).json({ error: 'Command not found or already executed' });
+    }
+  } catch (error) {
+    console.error('[Commands] Error cancelling command:', error);
+    res.status(500).json({ error: 'Failed to cancel command' });
+  }
+});
+
+export default router;

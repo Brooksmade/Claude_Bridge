@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+bridge-server/dist/
+figma-plugin/dist/
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+nul
+
+# IDE
+.vscode/
+.idea/
+
+# Temp files (project-specific)
+tmpclaude-*-cwd
+temp_*.json
+all_vars*.json
+temp_files/

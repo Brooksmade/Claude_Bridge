@@ -1,0 +1,581 @@
+# Claude Code ↔ Figma Bridge
+
+A real-time bridge that enables Claude Code to create, modify, and manipulate design elements directly on Figma canvases through natural language commands.
+
+**Current Version:** 1.2.0 | **Commands:** 136+ | **Last Updated:** January 2025
+
+## Overview
+
+This bridge consists of three components:
+
+1. **Bridge Server** - A Node.js HTTP server that queues commands between Claude Code and Figma
+2. **Figma Plugin** - A plugin that polls the bridge server and executes commands on the canvas
+3. **Shared Types** - TypeScript definitions shared between components
+
+```
+Claude Code → HTTP POST → Bridge Server → Figma Plugin → Figma Canvas
+                              ↓
+                         Results Queue
+                              ↓
+Claude Code ← HTTP GET ← Bridge Server
+```
+
+## Prerequisites
+
+- Node.js 16+
+- pnpm (or npm)
+- Figma desktop or web app
+
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+pnpm install
+```
+
+### 2. Build All Packages
+
+```bash
+pnpm build
+```
+
+### 3. Start the Bridge Server
+
+```bash
+pnpm dev
+```
+
+The server will start at `http://localhost:4001`.
+
+### 4. Install the Figma Plugin
+
+1. In Figma, go to **Plugins → Development → Import plugin from manifest**
+2. Select `figma-plugin/dist/manifest.json`
+3. Open the plugin from **Plugins → Development → Claude Figma Bridge**
+
+The plugin UI will show a green "Connected" status when successfully connected to the bridge server.
+
+## Sending Commands
+
+Commands are sent via HTTP POST to the bridge server. Claude Code can use curl or any HTTP client.
+
+### Basic Command Structure
+
+```bash
+curl -X POST http://localhost:4001/commands \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "create",
+    "payload": {
+      "nodeType": "RECTANGLE",
+      "properties": {
+        "name": "My Rectangle",
+        "x": 100,
+        "y": 100,
+        "width": 200,
+        "height": 100,
+        "fills": [{"type": "SOLID", "color": {"r": 0.2, "g": 0.4, "b": 1}}]
+      }
+    }
+  }'
+```
+
+### Getting Results
+
+Results can be retrieved by command ID:
+
+```bash
+# Wait for result (long-polling, 30s timeout)
+curl "http://localhost:4001/results/{commandId}?wait=true"
+
+# Check without waiting
+curl "http://localhost:4001/results/{commandId}"
+```
+
+## Command Reference (136+ Commands)
+
+### Node Creation (13 commands)
+
+| Command | Description |
+|---------|-------------|
+| `create` | Create a single node with optional nested children |
+| `batchCreate` | Create multiple nodes at once |
+| `createInstance` | Create an instance of a component |
+| `createComponent` | Create a reusable component |
+| `createComponentSet` | Create component set with variants |
+| `createFromSvg` | Import SVG as vector node |
+| `createSection` | Create a section container |
+| `createSlice` | Create export slice |
+| `createTable` | Create FigJam table |
+| `createSticky` | Create FigJam sticky note |
+| `createConnector` | Create FigJam connector |
+| `createShapeWithText` | Create FigJam shape with text |
+| `createCodeBlock` | Create FigJam code block |
+
+**Supported Node Types:** `FRAME`, `RECTANGLE`, `ELLIPSE`, `TEXT`, `LINE`, `POLYGON`, `STAR`, `VECTOR`, `COMPONENT`, `GROUP`
+
+### Node Modification (5 commands)
+
+| Command | Description |
+|---------|-------------|
+| `modify` | Change properties of a node |
+| `batchModify` | Modify multiple nodes |
+| `move` | Move node to x,y position |
+| `resize` | Change width/height |
+| `reparent` | Move node to different parent |
+
+### Query & Selection (7 commands)
+
+| Command | Description |
+|---------|-------------|
+| `query` | Get node info (selection, page, node, children, find, deep, describe, findByType, pages) |
+| `getFrames` | Get all frames on current page |
+| `getViewport` | Get current viewport info |
+| `setViewport` | Scroll/zoom to specific area |
+| `select` | Select one or more nodes |
+| `setPage` | Switch to a different page |
+| `analyzeColors` | Analyze colors used in selection/node |
+
+### Deletion Commands (4 commands)
+
+| Command | Description |
+|---------|-------------|
+| `delete` | Delete a single node |
+| `batchDelete` | Delete multiple nodes |
+| `deleteChildren` | Delete all children of a node |
+| `deleteSelection` | Delete currently selected nodes |
+
+### Grouping & Organization (5 commands)
+
+| Command | Description |
+|---------|-------------|
+| `group` | Group multiple nodes |
+| `ungroup` | Ungroup a group |
+| `flatten` | Flatten group structure |
+| `clone` | Clone node(s) with optional offset |
+| `boolean` | Boolean operations (UNION, SUBTRACT, INTERSECT, EXCLUDE) |
+
+### Variables (12 commands)
+
+| Command | Description |
+|---------|-------------|
+| `createVariableCollection` | Create design token collection |
+| `editVariableCollection` | Modify collection properties |
+| `deleteVariableCollection` | Delete a collection |
+| `createVariable` | Create individual variable |
+| `editVariable` | Modify variable values |
+| `deleteVariable` | Delete a variable |
+| `bindVariable` | Bind variable to property |
+| `unbindVariable` | Remove variable binding |
+| `getVariables` | List all variables |
+| `exportTokens` | Export as token JSON |
+| `importTokens` | Import from token JSON |
+| `createBoilerplate` | Create standard variable boilerplate (typography, spacing, etc.) |
+
+### Styles (11 commands)
+
+| Command | Description |
+|---------|-------------|
+| `createPaintStyle` | Create fill/stroke style |
+| `createTextStyle` | Create typography style |
+| `createEffectStyle` | Create effect style |
+| `createGridStyle` | Create layout grid style |
+| `editStyle` | Modify style properties |
+| `deleteStyle` | Delete a style |
+| `applyStyle` | Apply style to node |
+| `detachStyle` | Detach style from node |
+| `getStyles` | List all styles |
+| `getGridStyles` | List all grid styles |
+| `applyGridStyle` | Apply grid style to frame |
+
+### Components & Instances (12 commands)
+
+| Command | Description |
+|---------|-------------|
+| `addVariant` | Add variant to component set |
+| `editComponentProperties` | Modify component properties |
+| `getComponents` | List all components |
+| `editInstanceText` | Override instance text |
+| `overrideInstanceFills` | Override instance fills |
+| `overrideInstanceStrokes` | Override instance strokes |
+| `overrideInstanceEffects` | Override instance effects |
+| `resetOverrides` | Reset instance overrides |
+| `swapInstance` | Swap instance to different component |
+| `detachInstance` | Detach instance from component |
+
+### Auto Layout & Constraints (7 commands)
+
+| Command | Description |
+|---------|-------------|
+| `setAutoLayout` | Configure auto layout on frame |
+| `getAutoLayout` | Get auto layout settings |
+| `setLayoutChild` | Set child layout properties (align, grow) |
+| `setConstraints` | Set horizontal/vertical constraints |
+| `getConstraints` | Get current constraints |
+| `setSizeConstraints` | Set min/max width/height |
+| `inferAutoLayout` | Infer auto layout from existing layout |
+
+### Text Range Operations (11 commands)
+
+| Command | Description |
+|---------|-------------|
+| `setRangeFont` | Apply font to text range |
+| `setRangeFontSize` | Set font size for range |
+| `setRangeColor` | Set text color for range |
+| `setRangeTextDecoration` | Set underline/strikethrough |
+| `setRangeTextCase` | Set text case (upper/lower/title) |
+| `setRangeLineHeight` | Set line height for range |
+| `setRangeLetterSpacing` | Set letter spacing for range |
+| `insertText` | Insert text at position |
+| `deleteText` | Delete text in range |
+| `getRangeStyles` | Get styles for text range |
+| `setTextHyperlink` | Set hyperlink on text range |
+
+### Node Properties (14 commands)
+
+| Command | Description |
+|---------|-------------|
+| `setBlendMode` | Set blend mode (NORMAL, MULTIPLY, etc.) |
+| `setOpacity` | Set node opacity (0-1) |
+| `setVisible` | Show/hide node |
+| `setLocked` | Lock/unlock node |
+| `setClipsContent` | Enable/disable content clipping |
+| `setCornerRadius` | Set corner radius |
+| `setMask` | Set node as mask |
+| `setEffects` | Set effects (shadows, blurs) |
+| `setRotation` | Rotate node |
+| `setFills` | Set fill paints |
+| `setStrokes` | Set stroke paints |
+| `setPluginData` | Store plugin data on node |
+| `getPluginData` | Retrieve plugin data from node |
+| `renameNode` | Rename a node |
+
+### Pages (6 commands)
+
+| Command | Description |
+|---------|-------------|
+| `createPage` | Create new page |
+| `deletePage` | Delete a page |
+| `renamePage` | Rename a page |
+| `duplicatePage` | Duplicate a page |
+| `loadAllPages` | Load all pages into memory |
+| `setPage` | Switch to a different page |
+
+### Fonts (4 commands)
+
+| Command | Description |
+|---------|-------------|
+| `listFonts` | List available fonts |
+| `loadFont` | Load a font for use |
+| `checkMissingFonts` | Check for missing fonts |
+| `getUsedFonts` | Get fonts used in selection |
+
+### Images (4 commands)
+
+| Command | Description |
+|---------|-------------|
+| `createImage` | Create image from base64 data |
+| `createImageFromUrl` | Create image from URL |
+| `getImageData` | Get image data as base64 |
+| `replaceImage` | Replace existing image |
+
+### Export (4 commands)
+
+| Command | Description |
+|---------|-------------|
+| `exportNode` | Export node as PNG/JPG/SVG/PDF |
+| `batchExport` | Export multiple nodes |
+| `getExportSettings` | Get export settings for node |
+| `setExportSettings` | Set export settings for node |
+
+### Utilities (14 commands)
+
+| Command | Description |
+|---------|-------------|
+| `notify` | Show notification toast |
+| `commitUndo` | Commit undo history |
+| `triggerUndo` | Trigger undo |
+| `saveVersion` | Save version to history |
+| `getCurrentUser` | Get current user info |
+| `getActiveUsers` | Get active collaborators |
+| `getFileInfo` | Get file metadata |
+| `openExternal` | Open external URL |
+| `getFileThumbnail` | Get file thumbnail |
+| `setFileThumbnail` | Set file thumbnail |
+| `base64Encode` | Encode data to base64 |
+| `base64Decode` | Decode base64 data |
+| `getNodeColors` | Get colors from node |
+| `analyzeColors` | Analyze colors in selection |
+
+### Design System (3 commands) ⭐ NEW
+
+| Command | Description |
+|---------|-------------|
+| `createDesignSystem` | Create complete 4-level variable hierarchy in one command |
+| `validateDesignSystem` | Validate design system completeness and identify issues |
+| `getDesignSystemStatus` | Quick status check for design system readiness |
+
+**createDesignSystem** creates all 4 collection levels with proper mode configuration:
+- **Primitive [ Level 1 ]**: Gray scale, brand color scales, and boilerplate tokens
+- **Semantic [ Level 2 ]**: Brand colors and system feedback colors (Light/Dark modes)
+- **Tokens [ Level 3 ]**: Surface, text, border, icon tokens (Light Mode/Dark Mode)
+- **Theme**: Background, foreground, border, interactive, feedback colors (Light/Dark modes)
+
+Example:
+```bash
+curl -X POST http://localhost:4001/commands \
+  -H "Content-Type: application/json" \
+  -d '{"type": "createDesignSystem", "payload": {"brandColors": {"primary": "#ff6d38"}}}'
+```
+
+## Property Reference
+
+### Colors
+
+Colors use 0-1 range for RGB values:
+
+```json
+{
+  "fills": [
+    {"type": "SOLID", "color": {"r": 0.2, "g": 0.4, "b": 1}, "opacity": 1}
+  ]
+}
+```
+
+### Text Properties
+
+```json
+{
+  "characters": "Hello World",
+  "fontSize": 16,
+  "fontName": {"family": "Inter", "style": "Regular"},
+  "textAlignHorizontal": "CENTER",
+  "textAlignVertical": "CENTER"
+}
+```
+
+### Layout (Auto Layout)
+
+```json
+{
+  "layoutMode": "VERTICAL",
+  "primaryAxisAlignItems": "CENTER",
+  "counterAxisAlignItems": "CENTER",
+  "itemSpacing": 12,
+  "paddingLeft": 16,
+  "paddingRight": 16,
+  "paddingTop": 16,
+  "paddingBottom": 16
+}
+```
+
+### Effects
+
+```json
+{
+  "effects": [
+    {
+      "type": "DROP_SHADOW",
+      "color": {"r": 0, "g": 0, "b": 0, "a": 0.25},
+      "offset": {"x": 0, "y": 4},
+      "radius": 8,
+      "visible": true
+    }
+  ]
+}
+```
+
+## Examples
+
+### Create a Button
+
+```bash
+curl -X POST http://localhost:4001/commands \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "create",
+    "payload": {
+      "nodeType": "FRAME",
+      "properties": {
+        "name": "Button",
+        "width": 120,
+        "height": 40,
+        "x": 100,
+        "y": 100,
+        "fills": [{"type": "SOLID", "color": {"r": 0.2, "g": 0.4, "b": 1}}],
+        "cornerRadius": 8,
+        "layoutMode": "HORIZONTAL",
+        "primaryAxisAlignItems": "CENTER",
+        "counterAxisAlignItems": "CENTER"
+      },
+      "children": [
+        {
+          "nodeType": "TEXT",
+          "properties": {
+            "name": "Label",
+            "characters": "Click Me",
+            "fontSize": 14,
+            "fontName": {"family": "Inter", "style": "Medium"},
+            "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}]
+          }
+        }
+      ]
+    }
+  }'
+```
+
+### Create a Card Layout
+
+```bash
+curl -X POST http://localhost:4001/commands \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "create",
+    "payload": {
+      "nodeType": "FRAME",
+      "properties": {
+        "name": "Card",
+        "width": 320,
+        "height": 200,
+        "x": 100,
+        "y": 100,
+        "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}],
+        "cornerRadius": 12,
+        "layoutMode": "VERTICAL",
+        "itemSpacing": 12,
+        "paddingLeft": 16,
+        "paddingRight": 16,
+        "paddingTop": 16,
+        "paddingBottom": 16,
+        "effects": [
+          {
+            "type": "DROP_SHADOW",
+            "color": {"r": 0, "g": 0, "b": 0, "a": 0.1},
+            "offset": {"x": 0, "y": 2},
+            "radius": 8,
+            "visible": true
+          }
+        ]
+      },
+      "children": [
+        {
+          "nodeType": "TEXT",
+          "properties": {
+            "name": "Title",
+            "characters": "Card Title",
+            "fontSize": 18,
+            "fontName": {"family": "Inter", "style": "Semi Bold"},
+            "fills": [{"type": "SOLID", "color": {"r": 0.1, "g": 0.1, "b": 0.1}}]
+          }
+        },
+        {
+          "nodeType": "TEXT",
+          "properties": {
+            "name": "Description",
+            "characters": "This is a description of the card content.",
+            "fontSize": 14,
+            "fontName": {"family": "Inter", "style": "Regular"},
+            "fills": [{"type": "SOLID", "color": {"r": 0.4, "g": 0.4, "b": 0.4}}]
+          }
+        }
+      ]
+    }
+  }'
+```
+
+### Modify an Existing Node
+
+```bash
+curl -X POST http://localhost:4001/commands \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "modify",
+    "target": "123:456",
+    "payload": {
+      "properties": {
+        "fills": [{"type": "SOLID", "color": {"r": 1, "g": 0, "b": 0}}],
+        "cornerRadius": 16
+      }
+    }
+  }'
+```
+
+### Query Current Selection
+
+```bash
+curl -X POST http://localhost:4001/commands \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "query",
+    "payload": {
+      "selection": true
+    }
+  }'
+```
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Server status and queue stats |
+| `/commands` | POST | Queue a new command |
+| `/commands` | GET | Poll pending commands (used by plugin) |
+| `/commands/:id` | DELETE | Cancel a pending command |
+| `/results/:id` | GET | Get result for a command |
+| `/results/:id?wait=true` | GET | Long-poll for result (30s timeout) |
+| `/ws` | WebSocket | Real-time status updates |
+
+## Development
+
+### Watch Mode
+
+```bash
+# Run both in separate terminals
+pnpm --filter bridge-server dev
+pnpm --filter figma-plugin watch
+```
+
+### Build for Production
+
+```bash
+pnpm build
+```
+
+## Architecture Notes
+
+- **Polling Interval:** 200ms (configurable in `figma-plugin/src/code.ts`)
+- **Result Retention:** 5 minutes before automatic cleanup
+- **Sequential Execution:** Commands execute one at a time to maintain order
+- **Font Preloading:** Inter font family is preloaded for text operations
+
+## Security
+
+Claude Figma Bridge is a **localhost-only development tool**. Keep the following in mind:
+
+- **No authentication** — The bridge server binds to `localhost:4001` and is designed for local use only. Do not expose it to the network.
+- **Open CORS** — CORS is permissive by design so CLI tools (curl, Claude Code) can reach the server. This is safe on localhost but would be a risk if exposed externally.
+- **SSRF protection** — The `extractWebsiteCSS` command validates URLs before launching a headless browser. Requests to localhost, private IPs (`10.x`, `172.16-31.x`, `192.168.x`), link-local/cloud metadata (`169.254.x`), and non-HTTP protocols are blocked.
+- **No secrets in the repo** — The project has no `.env` files, API keys, or credentials. The `.gitignore` blocks `.env*` files preventively.
+
+## Troubleshooting
+
+### Plugin shows "Disconnected"
+
+1. Ensure the bridge server is running (`pnpm dev`)
+2. Check that port 4001 is not in use by another application
+3. Restart the Figma plugin
+
+### Commands not executing
+
+1. Check the bridge server console for errors
+2. Verify the plugin is showing "Connected" status
+3. Check the plugin's log panel for command execution details
+
+### Font errors
+
+The plugin preloads Inter font variants. For other fonts, ensure they are available in your Figma file before creating text with them.
+
+## License
+
+MIT

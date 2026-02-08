@@ -1,0 +1,3 @@
+- esbuild
+puppeteer:
+  executionEnv: node
