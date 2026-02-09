@@ -146,41 +146,72 @@ Agents are AI instructions for complex multi-step workflows. Key agents:
 
 Full list in `prompts/figma-bridge.md` → Related Agents section.
 
+## Why This Tool
+
+Claude Figma Bridge is not a collection of individual Figma operations. It is a set of **automated pipelines** where each step's output feeds the next step's input. The value is in the data flow between steps, not any single command.
+
+### Core Pipelines
+
+| Pipeline | Steps | Manual Time | Bridge Time |
+|----------|-------|-------------|-------------|
+| Design System from File | Extract → Detect → Create → Bind → Validate | 8-12 hours | 5 min |
+| Design System from Website | Extract CSS → Classify → Scale → Create/Update | 2-3 days | 15 min |
+| Variable Binding | Load → Map → Match → Bind → Report | 551+ manual clicks | 5 min |
+| Component Library | Create → Layout → Name → QA → Handoff | 2-3 weeks | 2-3 hours |
+| FigJam Diagrams | Plan → Measure → Position → Create → Connect | 1-2 hours | 15 min |
+| Engineering Handoff | Analyze → Specs → Code → Assets → Docs | 1-2 days/component | 15 min |
+| Full Design-to-Dev | Audit → System → Components → A11y → Handoff | 3-4 weeks | 1-2 hours |
+
+### What Makes It Different from MCP Figma Tools
+
+MCP tools expose individual operations (create a variable, resize a node). This bridge provides:
+
+- **One-command design systems** — `createDesignSystem` builds 4-level hierarchy with 130+ variables in one call
+- **Automatic binding during creation** — `extractDesignTokens` tracks which nodes use which values; `createDesignSystem` binds them automatically
+- **Website CSS extraction** — Headless browser gets computed styles from live websites (works on any site regardless of CSS methodology)
+- **Color classification** — Automatic primary/secondary/tertiary detection by saturation × frequency (no manual picking)
+- **Color scale generation** — 50-950 scales (11 steps) from any base color
+- **Conditional boilerplate** — Only fills gaps; extracted values take priority over defaults
+- **5 organizing principles** — 4-level, 3-level, 2-level, Material Design 3, Tailwind
+- **27 text range operations** — Character-level formatting (bold one word, color another)
+- **FigJam native diagrams** — Sections, shapes, connectors with text measurement
+- **30 agent workflows** — Pre-built multi-step pipelines
+- **Design system validation** — Checks structure, modes, naming, alias chains
+
+Full pipeline breakdowns with data flow notation: **`prompts/workflows.md`**
+
 ## Common Workflows
+
+### Create Design System from Figma Frame
+
+**Pipeline:** Extract → Detect → Create → Bind → Validate
+
+1. `extractDesignTokens` with `scope: "file"` — returns colors, typography, spacing, shadows **with node ID maps** (`colorNodes`, `fontSizeNodes`, `strokeNodes`, `shadowNodeIds`)
+2. Detect brand color — filter neutrals, sort by saturation × frequency, top 3 = primary/secondary/tertiary
+3. `createDesignSystem` with `extractedTokens` from step 1 — creates 4-level hierarchy, auto-binds variables to nodes using the node ID maps
+4. `editVariable` / `createVariable` for extracted values not in boilerplate
+5. `validateDesignSystem` — check structure, modes, naming
 
 ### Create Design System from Website
 
-1. Extract CSS: `extractWebsiteCSS` with website URL
-2. Create base system: `createDesignSystem` with boilerplate
-3. Update colors: `editVariable` on Brand/Secondary/Tertiary scales
-4. Add custom values: `createVariable` for extracted tokens
-5. Bind to frames: `bindFillVariable`, `bindVariable`
+**Pipeline:** Extract CSS → Classify → Scale → Create/Update
 
-### Create Design System from Figma Frame (One-Shot)
-
-1. Select frame in Figma
-2. Extract tokens: `extractDesignTokens` with `scope: "selection"` or `"file"`
-3. Create system: `createDesignSystem` with `extractedTokens` from step 2
-   - **Automatic binding**: Color variables bound to matching nodes
-   - **Automatic binding**: Text styles applied to nodes by font size
-   - **Automatic binding**: Effect styles applied to nodes with matching shadows
-4. Result includes `colorBindings`, `typographyStyles.nodesStyled`, `effectStyles.nodesStyled`
-
-**Key Features**: The `extractDesignTokens` command tracks:
-- `fontSizeNodes` - font sizes → node IDs for text style binding
-- `colorNodes` - fill colors → node IDs for color variable binding
-- `strokeNodes` - stroke colors → node IDs for stroke variable binding
-- `shadows[].nodeIds` - shadow effects → node IDs for effect style binding
-
-When passed to `createDesignSystem`, all bindings are applied automatically during creation.
+1. `extractWebsiteCSS` with URL — Puppeteer scans all DOM elements, returns computed colors (with usage count), typography, spacing, radius, shadows
+2. Color classification (automatic) — filter neutrals, sort by saturation × frequency
+3. Generate 50-950 scales (11 steps per color, 3 colors = 33 values)
+4. `createDesignSystem` or `editVariable` × 33 to update existing system
+5. `createVariable` for extracted values not in boilerplate
 
 ### Build Component Library
 
-1. Create design system (above)
-2. Create components: `createComponent` with auto layout
-3. Add variants: Nested component sets
-4. Bind tokens: `bindVariable` for all properties
-5. Generate handoff: Use `engineering-handoff` agent
+**Pipeline:** Create → Layout → Name → QA → Handoff
+
+1. `getComponents` + `getVariables` to inventory existing assets
+2. `createComponent` / `createComponentSet` with variant matrix (Size × Type × State)
+3. `setAutoLayout` + `setConstraints` on every variant
+4. Naming enforcement — `renameNode` to enforce "ComponentType/property=value"
+5. QA — check completeness, layout, bindings, accessibility (score 0-100)
+6. Engineering handoff — specs, CSS, Tailwind, assets at 1x/2x/3x
 
 ## Development
 
@@ -217,6 +248,7 @@ pnpm build:plugin
 | Path | Purpose |
 |------|---------|
 | `prompts/figma-bridge.md` | **Main API reference** - all commands, examples |
+| `prompts/workflows.md` | **Pipeline breakdowns** - all 9 workflows with data flow |
 | `prompts/memory-server.md` | Memory server API for tracking progress/solutions |
 | `prompts/website-design-system.md` | Website extraction workflow |
 | `.claude/agents/*.md` | AI agent definitions |
