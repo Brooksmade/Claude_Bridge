@@ -2,7 +2,7 @@
 
 A real-time bridge that enables Claude Code to create, modify, and manipulate design elements directly on Figma canvases through natural language commands.
 
-**Current Version:** 1.2.0 | **Commands:** 136+ | **Last Updated:** January 2025
+**Current Version:** 1.3.0 | **Commands:** 136+ | **Workflows:** 9 slash commands | **Agents:** 30 | **Last Updated:** February 2025
 
 ## Overview
 
@@ -55,6 +55,39 @@ The server will start at `http://localhost:4001`.
 3. Open the plugin from **Plugins → Development → Claude Figma Bridge**
 
 The plugin UI will show a green "Connected" status when successfully connected to the bridge server.
+
+## Claude Bridge vs MCP Tools
+
+| Capability | Claude Bridge | MCP Tools |
+|------------|--------------|-----------|
+| One-command design system | `createDesignSystem` creates 4-level hierarchy with 130+ variables | Must call individual CRUD operations 130+ times |
+| Automatic binding | `extractDesignTokens` tracks node→value maps, `createDesignSystem` binds during creation | No node tracking, no automatic binding |
+| Website extraction | Headless browser extracts computed CSS from live websites | Not available |
+| Color classification | Automatic primary/secondary/tertiary detection by saturation × frequency | Manual classification |
+| Color scale generation | 50-950 scales generated from any base color | Manual scale creation |
+| Conditional boilerplate | Only fills gaps — extracted values take priority over defaults | No boilerplate system |
+| Organizing principles | 5 configurable hierarchy patterns (4-level, 3-level, Material, Tailwind) | Single flat structure |
+| Text range operations | 27 commands for character-level formatting | Single `set_text` (full replacement) |
+| FigJam diagrams | Sections, shapes, connectors with text measurement and position calculation | Not available |
+| 30 agent workflows | Pre-built multi-step pipelines with data flow between steps | Individual tool calls only |
+| Design system validation | Checks structure, modes, naming, alias chains | Not available |
+| 9 slash commands | One-command workflows: `/design-system`, `/accessibility-audit`, `/figjam-workflow`, etc. | Not available |
+
+## Workflow Slash Commands
+
+Ready-to-use pipelines invoked directly in Claude Code with `/command-name`:
+
+| Command | Pipeline | What It Does |
+|---------|----------|-------------|
+| `/design-system-figma-file` | Extract → Detect → Create → Bind → Validate | Creates a complete 4-level design system from selected Figma frames |
+| `/design-system-website` | Extract CSS → Classify → Scale → Create/Update | Extracts CSS from a live website and creates a design system from it |
+| `/bind-variables` | Load → Map → Match → Bind → Report | Binds existing design system variables to frame elements (exact match) |
+| `/component-library` | Discover → Create → Layout → Name → QA → Handoff | Builds a component library with variants, auto layout, and QA scoring |
+| `/figjam-workflow` | Plan → Measure → Position → Create → Connect | Creates FigJam diagrams (flowcharts, process maps, user journeys) |
+| `/engineering-handoff` | Analyze → Specs → Code → Assets → Document | Generates developer specs, CSS, Tailwind utilities, and asset exports |
+| `/typography-system` | Audit → Load → Style/Format → Report | Font audits, mixed text styles, font replacement, hyperlink formatting |
+| `/accessibility-audit` | Extract → Contrast → Targets → Text → Report | WCAG 2.1 AA/AAA audit with contrast checks, touch targets, and visual reports |
+| `/design-to-dev` | Audit → System → Components → A11y → Handoff | Master pipeline that orchestrates all 5 phases of design-to-development |
 
 ## Sending Commands
 

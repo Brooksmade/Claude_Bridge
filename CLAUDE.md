@@ -333,6 +333,9 @@ Press `Ctrl+C` to stop the bridge server. It will:
 - **Check results** - Poll `/results/{id}?wait=true` for confirmation
 - **4-level variables** - Always use Primitive → Semantic → Tokens → Theme hierarchy
 - **Long commands** - Use `timeout=300000` for file-scope operations
+- **Plugin connection** - The plugin uses **long polling** by default, NOT WebSocket. `wsClients: 0` in `/health` does NOT mean disconnected. Send a `ping` command to verify connectivity.
+- **Prefer `describe` over `children`** - `query(children)` on large components can take 15+ minutes. Use `query(describe)` for fast structural overviews (1-2 seconds).
+- **Large JSON payloads** - Write to a temp file and use `curl -d @filename` instead of inline JSON to avoid shell quoting issues.
 
 ## Memory Integration
 
