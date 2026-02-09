@@ -34,6 +34,12 @@ pnpm test:e2e:principles
 # Website CSS extraction tests
 pnpm test:e2e:website
 
+# SSRF protection tests (does NOT require Figma plugin for blocked URLs)
+npx ts-node e2e/test-ssrf-protection.ts
+
+# Workflow command smoke tests (requires bridge + plugin)
+npx ts-node e2e/test-workflow-commands.ts
+
 # Run all e2e tests
 pnpm test:e2e:all
 ```
@@ -77,6 +83,39 @@ Tests the Puppeteer-based website CSS extraction functionality.
 - Create design system from extracted tokens
 - Error handling (invalid URLs, non-existent domains)
 - Complex site extraction (tailwindcss.com)
+
+### 4. SSRF Protection Tests (`test-ssrf-protection.ts`)
+
+Tests that the bridge server correctly blocks dangerous URLs before passing them to Puppeteer.
+
+**Tests (9):**
+- Bridge health check
+- Block loopback addresses (127.0.0.1)
+- Block localhost
+- Block private IP ranges (10.x.x.x, 192.168.x.x)
+- Block link-local/metadata addresses (169.254.169.254)
+- Block non-HTTP protocols (file://, ftp://)
+- Allow legitimate https URLs
+
+**Note:** Does NOT require the Figma plugin for blocked URL tests — only needs the bridge server running.
+
+### 5. Workflow Commands Smoke Tests (`test-workflow-commands.ts`)
+
+Lightweight smoke tests verifying core API calls used by all workflow commands.
+
+**Tests (11):**
+- Bridge health check + plugin ping
+- `getVariables` — returns valid structure with collections array
+- `getNodeColors` — returns color data from selection
+- `getUsedFonts` — returns font list
+- `checkMissingFonts` — returns result
+- `getComponents` — returns component array
+- `getDesignSystemStatus` — returns status object
+- `measureText` — returns width and height for text at given font size
+- `query(selection)` — returns valid selection response
+- `analyzeColors` — returns color analysis
+
+**Note:** Requires bridge server + Figma plugin connected.
 
 ## Test Phases (Main Suite)
 
