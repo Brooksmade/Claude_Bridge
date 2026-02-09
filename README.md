@@ -66,7 +66,7 @@ The plugin UI will show a green "Connected" status when successfully connected t
 | Color classification | Automatic primary/secondary/tertiary detection by saturation × frequency | Manual classification |
 | Color scale generation | 50-950 scales generated from any base color | Manual scale creation |
 | Conditional boilerplate | Only fills gaps — extracted values take priority over defaults | No boilerplate system |
-| Organizing principles | 5 configurable hierarchy patterns (4-level, 3-level, Material, Tailwind) | Single flat structure |
+| Design System Organizing principles | 5 configurable hierarchy patterns (4-level, 3-level, Material, Tailwind) | Single flat structure |
 | Text range operations | 27 commands for character-level formatting | Single `set_text` (full replacement) |
 | FigJam diagrams | Sections, shapes, connectors with text measurement and position calculation | Not available |
 | 30 agent workflows | Pre-built multi-step pipelines with data flow between steps | Individual tool calls only |
