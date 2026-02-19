@@ -22,8 +22,16 @@ nul
 .vscode/
 .idea/
 
-# Temp files (project-specific)
+# Temp files (session artifacts from Claude Code)
+.tmp/*
+!.tmp/.gitkeep
+tmp_*
+tmp-*
 tmpclaude-*-cwd
 temp_*.json
 all_vars*.json
 temp_files/
+*.tmp
+*_payload.json
+*_var_map.json
+variables_data.json
