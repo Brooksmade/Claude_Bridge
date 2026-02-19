@@ -17,10 +17,27 @@ export async function handleCreateImage(command: FigmaCommand): Promise<CommandR
 
   try {
     // Decode base64 to Uint8Array
-    var binaryString = figma.base64Decode(payload.data);
-    var bytes = new Uint8Array(binaryString.length);
-    for (var i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    var bytes: Uint8Array;
+    if (typeof figma.base64Decode === 'function') {
+      var decoded = figma.base64Decode(payload.data);
+      // figma.base64Decode returns Uint8Array in modern API
+      if (decoded instanceof Uint8Array) {
+        bytes = decoded;
+      } else {
+        // Fallback: treat as string
+        var str = decoded as unknown as string;
+        bytes = new Uint8Array(str.length);
+        for (var i = 0; i < str.length; i++) {
+          bytes[i] = str.charCodeAt(i);
+        }
+      }
+    } else {
+      // Fallback using standard atob
+      var binaryString = atob(payload.data);
+      bytes = new Uint8Array(binaryString.length);
+      for (var i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
     }
 
     // Create the image
@@ -223,10 +240,23 @@ export async function handleReplaceImage(command: FigmaCommand): Promise<Command
       var arrayBuffer = await response.arrayBuffer();
       bytes = new Uint8Array(arrayBuffer);
     } else {
-      var binaryString = figma.base64Decode(payload.data!);
-      bytes = new Uint8Array(binaryString.length);
-      for (var i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+      if (typeof figma.base64Decode === 'function') {
+        var decoded = figma.base64Decode(payload.data!);
+        if (decoded instanceof Uint8Array) {
+          bytes = decoded;
+        } else {
+          var str = decoded as unknown as string;
+          bytes = new Uint8Array(str.length);
+          for (var j2 = 0; j2 < str.length; j2++) {
+            bytes[j2] = str.charCodeAt(j2);
+          }
+        }
+      } else {
+        var binaryString = atob(payload.data!);
+        bytes = new Uint8Array(binaryString.length);
+        for (var j2 = 0; j2 < binaryString.length; j2++) {
+          bytes[j2] = binaryString.charCodeAt(j2);
+        }
       }
     }
 

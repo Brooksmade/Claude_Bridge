@@ -114,6 +114,30 @@
       color: #22c55e;
     }
 
+    .stat.clickable {
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      border: 1px solid transparent;
+      user-select: none;
+    }
+
+    .stat.clickable:hover {
+      background: #eee;
+    }
+
+    .stat.filter-active {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    .stat.filter-active:hover {
+      background: #fee2e2;
+    }
+
+    .log.errors-only .log-entry:not(.error) {
+      display: none;
+    }
+
     .log-time {
       color: #999;
       margin-right: 6px;
@@ -221,7 +245,7 @@
       <div class="stat-label">Commands</div>
       <div id="commandCount" class="stat-value">0</div>
     </div>
-    <div class="stat">
+    <div id="errorStat" class="stat clickable" title="Click to filter log to errors only">
       <div class="stat-label">Errors</div>
       <div id="errorCount" class="stat-value">0</div>
     </div>

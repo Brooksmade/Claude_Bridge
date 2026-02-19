@@ -6,6 +6,7 @@
   "ui": "ui.html",
   "documentAccess": "dynamic-page",
   "editorType": ["figma"],
+  "enablePrivatePluginApi": true,
   "networkAccess": {
     "allowedDomains": ["http://localhost:4001"],
     "reasoning": "Required to communicate with the local Claude Bridge server for real-time design manipulation"

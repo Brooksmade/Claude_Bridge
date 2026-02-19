@@ -1,5 +1,6 @@
 import type { FigmaCommand, CommandResult } from './types';
 import { successResult, errorResult } from './types';
+import { serializeVariable, serializeVariableCollection } from '../utils/variable-factory';
 
 // Create a variable alias
 export async function handleCreateVariableAlias(command: FigmaCommand): Promise<CommandResult> {
@@ -229,6 +230,7 @@ export async function handleSetNodeBoundVariable(command: FigmaCommand): Promise
 export async function handleGetVariableById(command: FigmaCommand): Promise<CommandResult> {
   var payload = command.payload as {
     variableId: string;
+    includeCollection?: boolean;
   };
 
   if (!payload || !payload.variableId) {
@@ -244,20 +246,27 @@ export async function handleGetVariableById(command: FigmaCommand): Promise<Comm
       });
     }
 
+    // Use serializeVariable to include valuesByMode
+    const serialized = serializeVariable(variable) as Record<string, any>;
+    // Also include key and codeSyntax which serializeVariable doesn't add
+    serialized.key = variable.key;
+    serialized.codeSyntax = variable.codeSyntax;
+
+    const result: Record<string, any> = {
+      found: true,
+      variable: serialized,
+    };
+
+    // Optionally include collection context (mode names mapped to mode IDs)
+    if (payload.includeCollection) {
+      const collection = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
+      if (collection) {
+        result.collection = serializeVariableCollection(collection);
+      }
+    }
+
     return successResult(command.id, {
-      data: {
-        found: true,
-        variable: {
-          id: variable.id,
-          name: variable.name,
-          key: variable.key,
-          resolvedType: variable.resolvedType,
-          description: variable.description,
-          hiddenFromPublishing: variable.hiddenFromPublishing,
-          scopes: variable.scopes,
-          codeSyntax: variable.codeSyntax,
-        },
-      },
+      data: result,
     });
   } catch (err) {
     var message = err instanceof Error ? err.message : String(err);

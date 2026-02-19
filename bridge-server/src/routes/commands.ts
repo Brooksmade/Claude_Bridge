@@ -4,6 +4,7 @@ import type { FigmaCommand, CommandPayload, CommandType } from '@figma-claude-br
 import { queue } from '../services/queue.js';
 import { broadcast } from '../services/websocket.js';
 import { extractWebsiteCSS } from '../services/websiteExtractor.js';
+import { extractWebsiteLayout } from '../services/websiteLayoutExtractor.js';
 
 const router: RouterType = Router();
 
@@ -11,7 +12,7 @@ const router: RouterType = Router();
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { type, target, payload } = req.body as {
-      type?: CommandType | 'extractWebsiteCSS';
+      type?: CommandType | 'extractWebsiteCSS' | 'extractWebsiteLayout';
       target?: string;
       payload?: CommandPayload & { url?: string };
     };
@@ -48,6 +49,54 @@ router.post('/', async (req: Request, res: Response) => {
       // Run extraction and store result
       try {
         const result = await extractWebsiteCSS(payload.url, extractionOptions);
+        queue.addResult({
+          commandId,
+          success: result.success,
+          timestamp: Date.now(),
+          data: result,
+        });
+      } catch (error) {
+        queue.addResult({
+          commandId,
+          success: false,
+          timestamp: Date.now(),
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+      return;
+    }
+
+    // Handle extractWebsiteLayout (server-side, not sent to Figma plugin)
+    if (type === 'extractWebsiteLayout') {
+      const commandId = uuidv4();
+      console.log(`[Commands] Processing server-side command: ${type} (${commandId})`);
+
+      if (!payload?.url) {
+        res.status(400).json({ error: 'Missing required field: payload.url' });
+        return;
+      }
+
+      const layoutOptions = {
+        viewport: (payload as any).viewport,
+        maxElements: (payload as any).maxElements,
+        maxDepth: (payload as any).maxDepth,
+        captureScreenshot: (payload as any).captureScreenshot ?? true,
+        screenshotFullPage: (payload as any).screenshotFullPage ?? false,
+        dismissOverlays: (payload as any).dismissOverlays ?? true,
+        minElementSize: (payload as any).minElementSize,
+        screenshotSections: (payload as any).screenshotSections ?? false,
+      };
+
+      // Return immediately with commandId
+      res.status(202).json({
+        success: true,
+        commandId,
+        message: 'Layout extraction started. Poll /results/{commandId}?wait=true for results.',
+      });
+
+      // Run extraction and store result
+      try {
+        const result = await extractWebsiteLayout(payload.url, layoutOptions);
         queue.addResult({
           commandId,
           success: result.success,

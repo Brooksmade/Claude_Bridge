@@ -241,3 +241,13 @@ export interface MeasureTextResult {
   fontFamily: string;
   fontStyle: string;
 }
+
+// === WEBSITE LAYOUT EXTRACTION ===
+export type {
+  ElementStyles,
+  LayoutElement,
+  PageSection,
+  ImageReference,
+  LayoutExtractionOptions,
+  LayoutExtractionResult,
+} from './layout.js';

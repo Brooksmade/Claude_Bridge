@@ -65,6 +65,8 @@ Use the `extractWebsiteCSS` command which:
 - Navigates to the URL
 - Waits for network idle
 - Extracts computed styles from ALL elements
+- **Extracts CSS custom properties (`--*`) with theme mode detection**
+- Automatically detects if `:root` is light or dark mode
 
 ```bash
 curl -s -X POST http://localhost:4001/commands -H "Content-Type: application/json" \
@@ -111,6 +113,27 @@ The command returns:
   }
 }
 ```
+
+### Step 1.3: Check CSS Variable Theme Direction
+
+**CRITICAL:** Before creating Token variables, check `cssVariables.rootMode` in the extraction result:
+
+```
+cssVariables.rootMode = "dark"   → :root has DARK values, [data-theme="light"] has light values
+cssVariables.rootMode = "light"  → :root has LIGHT values (standard convention)
+cssVariables.rootMode = "unknown" → Could not detect; inspect manually
+```
+
+The `cssVariables.variables` map already assigns values to the correct `light`/`dark` keys. Use these directly for Token variable creation:
+
+```javascript
+// Example: creating Token variable with correct mode values
+const bgVar = cssVariables.variables["--default-background"];
+// bgVar.light = "#f9fafb"  (always the light mode value)
+// bgVar.dark = "#030712"   (always the dark mode value)
+```
+
+**Do NOT assume `:root` = light mode.** Some sites (e.g., dark-first themes) store dark values in `:root` with light overrides in `[data-theme="light"]`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Use this prompt to enable Claude to interact with Figma through the Claude Figma Bridge.
 
-**Current Version:** 1.6.0 | **Commands:** 174 | **Agents:** 30 | **Last Updated:** February 2026
+**Current Version:** 1.7.0 | **Commands:** 175 | **Agents:** 31 | **Last Updated:** February 2026
 
 ---
 
@@ -844,6 +844,137 @@ After creating variables, bind them to frame elements:
 
 **IMPORTANT:** Use exact value matching only when binding. See `prompts/bind-variables.md` for the binding workflow.
 
+### Automatic Binding: bindMatchingColors
+
+Scans all nodes in scope, matches fill/stroke colors to variable values, and binds automatically. Resolves alias chains so Semantic/Token/Theme variables are matched by their resolved color. Prefers Token-level variables over Primitives when multiple variables match the same hex.
+
+```json
+{
+  "type": "bindMatchingColors",
+  "payload": {
+    "scope": "selection",
+    "tolerance": 0,
+    "includeStrokes": true,
+    "maxNodes": 10000,
+    "dryRun": false,
+    "forceRebind": false,
+    "validCollectionIds": ["VariableCollectionId:21:67"]
+  }
+}
+```
+
+**Parameters:**
+- `scope`: `"selection"` | `"page"` | `"file"` (default: `"file"`)
+- `tolerance`: Color matching tolerance 0-255 (default: 0 = exact match)
+- `forceRebind`: If true, rebind all nodes even if already bound (default: false)
+- `validCollectionIds`: Only keep existing bindings from these collections; rebind if from other collections
+- `dryRun`: If true, report what would be bound without actually binding
+
+**Collection priority** (when multiple variables match same hex): Token (4) > Semantic (3) > Theme (2) > Primitive (0)
+
+### Automatic Binding: autoBindByRole
+
+Uses semantic role detection (background, text, border, accent) based on node type, size, color lightness, and WCAG contrast against the effective background. Finds the best variable by role name pattern, preferring Token/Theme-level variables.
+
+```json
+{
+  "type": "autoBindByRole",
+  "payload": {
+    "scope": "selection",
+    "minConfidence": 0.6,
+    "dryRun": false,
+    "bindFills": true,
+    "bindStrokes": true,
+    "forceRebind": false,
+    "includeInstanceChildren": false
+  }
+}
+```
+
+**Role detection precedence:** Text nodes use WCAG contrast checking against actual parent background. Non-text nodes are classified by area (large = background/surface, medium = card, small = accent) and color properties (lightness, saturation).
+
+**Variable selection by role:**
+| Role | Looks for (in order) | Fallback |
+|------|---------------------|----------|
+| background | Surface/Page, Surface/Background/Primary | Gray Scale/950 |
+| surface | Surface/Elevated, Surface/Background/Secondary | Gray Scale/900 |
+| card | Surface/Card, Surface/Elevated | System/White |
+| text-on-light | Text/Primary, Text/Default | Gray Scale/900 |
+| text-on-dark | Text/Inverse, Text/On-Dark | Gray Scale/50 |
+| border | Border/Default, Border/Primary | Gray Scale/300 |
+| accent | Brand/Primary, Brand/500 | primary/500 |
+
+### Get Variables
+
+Retrieve variables from a collection by ID or name, optionally with resolved values.
+
+```json
+{"type": "getVariables", "payload": {"collectionName": "Tokens [ Level 3 ]", "includeValues": true}}
+```
+
+```json
+{"type": "getVariables", "payload": {"collectionId": "VariableCollectionId:21:67", "includeValues": true}}
+```
+
+**Parameters:**
+- `collectionId` or `collectionName`: Identify the collection (name search is case-sensitive)
+- `includeValues`: If true, includes resolved hex values in `valuesByMode`
+- Without either: returns all collections with their variables
+
+### Get Variable By ID
+
+Retrieve a single variable with full details including `valuesByMode`.
+
+```json
+{"type": "getVariableById", "payload": {"variableId": "VariableID:21:68", "includeCollection": true}}
+```
+
+**Parameters:**
+- `variableId`: The variable ID
+- `includeCollection`: If true, returns the parent collection with mode names alongside mode IDs
+
+### Edit Variable
+
+Update an existing variable's name, values, description, scopes, or visibility.
+
+```json
+{
+  "type": "editVariable",
+  "payload": {
+    "variableId": "VariableID:21:68",
+    "values": {
+      "Light Mode": "#f9fafb",
+      "Dark Mode": "#030712"
+    }
+  }
+}
+```
+
+**Validation:**
+- Using `"value"` (singular) instead of `"values"` (plural) returns an error with guidance
+- At least one editable field must be provided
+
+### Batch Edit Variable
+
+Edit multiple variables in a single command. Follows the same pattern as `batchCreate`.
+
+```json
+{
+  "type": "batchEditVariable",
+  "payload": [
+    {"variableId": "VariableID:21:68", "values": {"Light Mode": "#f9fafb", "Dark Mode": "#030712"}},
+    {"variableId": "VariableID:21:69", "values": {"Light Mode": "#f9fafb", "Dark Mode": "#030712"}},
+    {"variableId": "VariableID:21:70", "values": {"Light Mode": "#ffffff", "Dark Mode": "#171c26"}}
+  ]
+}
+```
+
+**Payload:** Direct array of `EditVariablePayload` objects (NOT `{edits: [...]}`).
+
+**Returns:** `{edited: N, total: N, results: [...], errors?: [...]}`
+
+Supports partial success — if one edit fails, others still proceed. Caches collection lookups for performance.
+
 ---
 
 ## Text Measurement Commands
@@ -1082,6 +1213,17 @@ Extract design tokens from a live website using Puppeteer headless browser:
     "zIndex": [1, 10, 100],
     "containerWidths": [640, 768, 1024, 1280]
   },
+  "cssVariables": {
+    "rootMode": "dark",
+    "detectionMethod": "Found [data-theme=\"light\"] overrides with no dark overrides → :root is dark",
+    "themeSelectors": { "light": "[data-theme=\"light\"]", "dark": null },
+    "variables": {
+      "--default-background": { "light": "#f9fafb", "dark": "#030712" },
+      "--default-font": { "light": "#363b45", "dark": "#cdd2d5" },
+      "--brand-primary": { "light": "#064150", "dark": "#05a2c2" }
+    },
+    "totalFound": 87
+  },
   "meta": {
     "extractedAt": "2026-01-07T06:10:30.287Z",
     "elementsScanned": 1129,
@@ -1090,17 +1232,115 @@ Extract design tokens from a live website using Puppeteer headless browser:
 }
 ```
 
+**CSS Variable Theme Detection:**
+
+The extractor automatically detects whether `:root` contains light or dark mode values by scanning stylesheets for theme override selectors:
+
+| Site Pattern | Detection | rootMode |
+|---|---|---|
+| `:root` + `[data-theme="light"]` overrides | Light overrides exist, no dark overrides | `dark` |
+| `:root` + `[data-theme="dark"]` overrides | Dark overrides exist, no light overrides | `light` |
+| `:root` + both overrides | Background variable lightness heuristic | auto-detected |
+| `:root` only (no overrides) | Single-theme site | `light` (convention) |
+
+Supported override selectors: `[data-theme]`, `[data-mode]`, `[data-color-scheme]`, `.light`/`.dark`, `.light-theme`/`.dark-theme`, `@media (prefers-color-scheme)`.
+
+**IMPORTANT:** Do NOT assume `:root` is always light mode. Always use `cssVariables.rootMode` to determine which mode `:root` represents. The `cssVariables.variables` map already has values assigned to the correct `light`/`dark` keys regardless of which was in `:root`.
+
 **Prerequisites:**
 - Google Chrome installed on the system
 - Bridge server running at `http://localhost:4001`
 
 **Use with Design System Creation:**
 1. Extract CSS from website: `extractWebsiteCSS`
-2. Create base design system: `createDesignSystem` (with boilerplate)
-3. Update color scales: `editVariable` on Brand/Secondary/Tertiary Scale
+2. Check `cssVariables.rootMode` to understand theme direction
+3. Use `cssVariables.variables` for correct light/dark Token variable values
+4. Create base design system: `createDesignSystem` (with boilerplate)
+5. Update color scales: `editVariable` on Brand/Secondary/Tertiary Scale
 4. Add extracted values: `createVariable` for non-boilerplate items
 
 See `prompts/website-design-system.md` for the complete workflow.
+
+### Extract Website Layout (Headless Browser)
+
+Extract DOM layout structure from a live website — per-element bounding boxes, styles, text, and images for recreation in Figma:
+
+```json
+{
+  "type": "extractWebsiteLayout",
+  "payload": {
+    "url": "https://example.com/",
+    "maxElements": 500,
+    "maxDepth": 8,
+    "captureScreenshot": true,
+    "dismissOverlays": true,
+    "minElementSize": 4
+  }
+}
+```
+
+**Options:**
+- `viewport` — `{width, height}`, default `{1440, 900}`
+- `maxElements` — Cap on extracted elements, default 500
+- `maxDepth` — Max DOM depth to traverse, default 8
+- `captureScreenshot` — Capture a PNG screenshot, default true
+- `screenshotFullPage` — Full page vs viewport only, default false
+- `dismissOverlays` — Auto-click cookie/consent banners, default true
+- `minElementSize` — Skip elements smaller than this (px), default 4
+
+**Returns** (after polling `/results/{commandId}?wait=true&timeout=300000`):
+```json
+{
+  "success": true,
+  "url": "https://example.com/",
+  "viewport": {"width": 1440, "height": 900},
+  "pageHeight": 3200,
+  "elements": [
+    {
+      "id": 0,
+      "parentId": -1,
+      "tag": "HEADER",
+      "semanticRole": "header",
+      "bounds": {"x": 0, "y": 0, "width": 1440, "height": 80},
+      "text": null,
+      "styles": {
+        "backgroundColor": "#FFFFFF",
+        "color": "#1A1A1A",
+        "fontSize": 16,
+        "fontFamily": "Inter",
+        "fontWeight": 400,
+        "display": "flex",
+        "flexDirection": "row",
+        "justifyContent": "space-between",
+        "alignItems": "center",
+        "gap": 16,
+        "padding": {"top": 16, "right": 32, "bottom": 16, "left": 32}
+      },
+      "childCount": 3
+    }
+  ],
+  "sections": [
+    {"id": 0, "role": "header", "bounds": {"x": 0, "y": 0, "width": 1440, "height": 80}, "name": "Header"},
+    {"id": 5, "role": "hero", "bounds": {"x": 0, "y": 80, "width": 1440, "height": 600}, "name": "Hero Section"}
+  ],
+  "images": [
+    {"elementId": 12, "src": "https://example.com/logo.png", "type": "img", "bounds": {"x": 32, "y": 20, "width": 120, "height": 40}, "alt": "Logo"}
+  ],
+  "meta": {
+    "extractedAt": "2026-02-16T10:30:00.000Z",
+    "elementsExtracted": 245,
+    "extractionTimeMs": 5200
+  }
+}
+```
+
+**Use with Website-to-Figma Capture:**
+1. Get file key: `getFileInfo` → fileKey of the open Figma file
+2. Capture website: Figma MCP `generate_figma_design` with `existingFile` mode + Playwright automation
+3. (Optional) Extract tokens: `extractWebsiteCSS` → colors, typography, spacing
+4. (Optional) Create design system: `createDesignSystem` with extracted tokens
+
+See `.claude/agents/website-to-figma.md` for the complete pipeline.
 
 ---
 

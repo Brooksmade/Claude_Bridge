@@ -4,6 +4,7 @@ let errorCount = 0;
 let currentCommandId: string | null = null;
 let currentCommandStartTime: number | null = null;
 let elapsedIntervalId: number | null = null;
+let showErrorsOnly = false;
 
 // DOM elements
 const statusIndicator = document.getElementById('statusIndicator') as HTMLElement;
@@ -16,6 +17,7 @@ const currentCommandTitleEl = document.getElementById('currentCommandTitle') as 
 const currentCommandTypeEl = document.getElementById('currentCommandType') as HTMLElement;
 const currentCommandElapsedEl = document.getElementById('currentCommandElapsed') as HTMLElement;
 const pendingCloseNoticeEl = document.getElementById('pendingCloseNotice') as HTMLElement;
+const errorStatEl = document.getElementById('errorStat') as HTMLElement;
 
 function formatTime(): string {
   return new Date().toLocaleTimeString('en-US', {
@@ -144,6 +146,14 @@ window.onmessage = (event) => {
       break;
   }
 };
+
+// Error filter toggle
+errorStatEl.addEventListener('click', () => {
+  showErrorsOnly = !showErrorsOnly;
+  logEl.classList.toggle('errors-only', showErrorsOnly);
+  errorStatEl.classList.toggle('filter-active', showErrorsOnly);
+  logEl.scrollTop = logEl.scrollHeight;
+});
 
 // Initial state
 addLog('Plugin UI loaded');

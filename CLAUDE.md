@@ -129,9 +129,9 @@ curl -X POST http://localhost:4001/commands \
 | **Styles** | createPaintStyle, createTextStyle, applyStyle |
 | **Components** | createComponent, createInstance |
 | **Query** | query, getFrames, getVariables, getNodeColors |
-| **Server-Side** | extractWebsiteCSS (Puppeteer headless browser) |
+| **Server-Side** | extractWebsiteCSS, extractWebsiteLayout (Puppeteer headless browser) |
 
-## Available Agents (30)
+## Available Agents (31)
 
 Agents are AI instructions for complex multi-step workflows. Key agents:
 
@@ -143,6 +143,7 @@ Agents are AI instructions for complex multi-step workflows. Key agents:
 | `design-system-orchestrator` | Full pipeline: extract → create → bind → document → validate |
 | `engineering-handoff` | Generates dev specs, CSS, token maps |
 | `figjam-workflow-design` | Creates FigJam diagrams for workflows, processes, and user journeys |
+| `website-to-figma` | Captures a website into Figma via MCP, optionally creates design system variables |
 
 Full list in `prompts/figma-bridge.md` → Related Agents section.
 
@@ -156,6 +157,7 @@ Claude Figma Bridge is not a collection of individual Figma operations. It is a 
 |----------|-------|-------------|-------------|
 | Design System from File | Extract → Detect → Create → Bind → Validate | 8-12 hours | 5 min |
 | Design System from Website | Extract CSS → Classify → Scale → Create/Update | 2-3 days | 15 min |
+| Website-to-Figma Capture | MCP Capture → (Optional) Extract CSS → Design System | 1-2 weeks | 5 min |
 | Variable Binding | Load → Map → Match → Bind → Report | 551+ manual clicks | 5 min |
 | Component Library | Create → Layout → Name → QA → Handoff | 2-3 weeks | 2-3 hours |
 | FigJam Diagrams | Plan → Measure → Position → Create → Connect | 1-2 hours | 15 min |
@@ -175,7 +177,7 @@ MCP tools expose individual operations (create a variable, resize a node). This 
 - **5 organizing principles** — 4-level, 3-level, 2-level, Material Design 3, Tailwind
 - **27 text range operations** — Character-level formatting (bold one word, color another)
 - **FigJam native diagrams** — Sections, shapes, connectors with text measurement
-- **30 agent workflows** — Pre-built multi-step pipelines
+- **31 agent workflows** — Pre-built multi-step pipelines
 - **Design system validation** — Checks structure, modes, naming, alias chains
 
 Full pipeline breakdowns with data flow notation: **`prompts/workflows.md`**

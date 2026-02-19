@@ -133,7 +133,7 @@ export async function handleGetActiveUsers(command: FigmaCommand): Promise<Comma
 export async function handleGetFileInfo(command: FigmaCommand): Promise<CommandResult> {
   return successResult(command.id, {
     data: {
-      fileKey: figma.fileKey,
+      fileKey: figma.fileKey ?? null,
       editorType: figma.editorType,
       apiVersion: figma.apiVersion,
       pluginId: figma.pluginId,

@@ -65,6 +65,7 @@ interface BindVariablePayload {
 
 interface GetVariablesPayload {
   collectionId?: string;
+  collectionName?: string;
   includeValues?: boolean;
 }
 
@@ -253,6 +254,16 @@ export async function handleEditVariable(command: FigmaCommand): Promise<Command
     return errorResult(command.id, 'Variable ID is required');
   }
 
+  // Detect common mistake: "value" (singular) instead of "values" (plural)
+  if ((payload as any).value !== undefined && payload.values === undefined) {
+    return errorResult(command.id, "editVariable requires 'values' (plural) keyed by mode name, not 'value' (singular). Example: {\"values\": {\"Mode 1\": \"#ff0000\"}}");
+  }
+
+  // Require at least one editable field
+  if (payload.name === undefined && payload.values === undefined && payload.description === undefined && payload.scopes === undefined && payload.hiddenFromPublishing === undefined) {
+    return errorResult(command.id, 'editVariable requires at least one field to update (name, values, description, scopes, or hiddenFromPublishing)');
+  }
+
   try {
     const variable = await figma.variables.getVariableByIdAsync(payload.variableId);
     if (!variable) {
@@ -309,6 +320,114 @@ export async function handleEditVariable(command: FigmaCommand): Promise<Command
     const message = error instanceof Error ? error.message : String(error);
     return errorResult(command.id, message);
   }
+}
+
+// Batch edit multiple variables in one call
+export async function handleBatchEditVariable(command: FigmaCommand): Promise<CommandResult> {
+  const payloads = command.payload as EditVariablePayload[];
+
+  if (!Array.isArray(payloads)) {
+    return errorResult(command.id, 'batchEditVariable requires an array of EditVariablePayload objects');
+  }
+
+  if (payloads.length === 0) {
+    return errorResult(command.id, 'batchEditVariable requires at least one payload');
+  }
+
+  // Pre-validate all payloads for common mistakes before processing
+  for (let i = 0; i < payloads.length; i++) {
+    const p = payloads[i] as any;
+    if (!p.variableId) {
+      return errorResult(command.id, `Payload[${i}]: variableId is required`);
+    }
+    if (p.value !== undefined && p.values === undefined) {
+      return errorResult(command.id, `Payload[${i}] (${p.variableId}): use 'values' (plural) keyed by mode name, not 'value' (singular)`);
+    }
+  }
+
+  // Cache collection lookups (variables in same collection share the collection)
+  const collectionCache = new Map<string, VariableCollection>();
+  const results: object[] = [];
+  const errors: string[] = [];
+
+  for (let i = 0; i < payloads.length; i++) {
+    const payload = payloads[i];
+    try {
+      const variable = await figma.variables.getVariableByIdAsync(payload.variableId);
+      if (!variable) {
+        errors.push(`Payload[${i}] (${payload.variableId}): variable not found`);
+        continue;
+      }
+
+      // Get collection from cache or fetch
+      let collection = collectionCache.get(variable.variableCollectionId);
+      if (!collection) {
+        const fetched = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
+        if (!fetched) {
+          errors.push(`Payload[${i}] (${payload.variableId}): collection not found`);
+          continue;
+        }
+        collection = fetched;
+        collectionCache.set(collection.id, collection);
+      }
+
+      // Update name
+      if (payload.name) {
+        const validation = validateTokenName(payload.name);
+        if (!validation.valid) {
+          errors.push(`Payload[${i}] (${payload.variableId}): ${validation.error}`);
+          continue;
+        }
+        variable.name = payload.name;
+      }
+
+      // Update values
+      if (payload.values) {
+        const modeNames = Object.keys(payload.values);
+        for (const modeName of modeNames) {
+          const value = payload.values[modeName];
+          const modeId = getModeIdByName(collection, modeName);
+          if (modeId) {
+            const convertedValue = convertVariableValue(value, variable.resolvedType);
+            variable.setValueForMode(modeId, convertedValue);
+          }
+        }
+      }
+
+      // Update description
+      if (payload.description !== undefined) {
+        variable.description = payload.description;
+      }
+
+      // Update scopes
+      if (payload.scopes) {
+        variable.scopes = payload.scopes;
+      }
+
+      // Update publishing visibility
+      if (payload.hiddenFromPublishing !== undefined) {
+        variable.hiddenFromPublishing = payload.hiddenFromPublishing;
+      }
+
+      results.push(serializeVariable(variable));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(`Payload[${i}] (${payload.variableId}): ${message}`);
+    }
+  }
+
+  if (errors.length > 0 && results.length === 0) {
+    return errorResult(command.id, errors.join('; '));
+  }
+
+  return successResult(command.id, {
+    data: {
+      edited: results.length,
+      total: payloads.length,
+      results,
+      errors: errors.length > 0 ? errors : undefined,
+    },
+  });
 }
 
 // Delete a variable
@@ -682,6 +801,35 @@ export async function handleGetVariables(command: FigmaCommand): Promise<Command
     }
 
     const collections = Array.from(collectionsMap.values());
+
+    // Find collection by name if specified
+    if (payload.collectionName) {
+      let matchedCollection: VariableCollection | null = null;
+      for (const c of collections) {
+        if (c.name === payload.collectionName) {
+          matchedCollection = c;
+          break;
+        }
+      }
+      if (!matchedCollection) {
+        return errorResult(command.id, 'Collection not found by name: ' + payload.collectionName);
+      }
+
+      const variables: object[] = [];
+      for (const varId of matchedCollection.variableIds) {
+        const variable = await figma.variables.getVariableByIdAsync(varId);
+        if (variable) {
+          variables.push(serializeVariable(variable));
+        }
+      }
+
+      return successResult(command.id, {
+        data: {
+          collection: serializeVariableCollection(matchedCollection),
+          variables,
+        },
+      });
+    }
 
     if (payload.collectionId) {
       // Get specific collection with its variables
@@ -1106,15 +1254,47 @@ export async function handleBindMatchingColors(command: FigmaCommand): Promise<C
     figma.skipInvisibleInstanceChildren = true;
 
     // Step 1: Get all color variables and build a map
+    // Resolve alias chains so Semantic/Token/Theme variables are indexed by their resolved hex
     const colorVariables = await figma.variables.getLocalVariablesAsync('COLOR');
     const colorMap = new Map<string, Variable[]>(); // hex -> variables
 
-    for (const variable of colorVariables) {
-      // Get the value for the default mode
-      const collection = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
-      if (!collection) continue;
+    // Cache collection lookups and compute collection priority
+    // Higher priority = preferred for binding (Token > Semantic > Theme > Primitive)
+    const collectionCache = new Map<string, VariableCollection>();
+    const collectionPriority = new Map<string, number>();
 
-      const value = variable.valuesByMode[collection.defaultModeId];
+    const getCollectionPriority = (collectionName: string): number => {
+      const lower = collectionName.toLowerCase();
+      if (lower.includes('token')) return 4;   // Tokens [ Level 3 ] — UI-specific, dark mode aware
+      if (lower.includes('semantic')) return 3; // Semantic [ Level 2 ] — brand meanings
+      if (lower.includes('theme')) return 2;    // Theme — app-level
+      if (lower.includes('system')) return 2;   // M3 System tokens
+      if (lower.includes('component')) return 1; // M3 Component tokens
+      return 0;                                  // Primitive / Reference / raw
+    };
+
+    for (const variable of colorVariables) {
+      let collection = collectionCache.get(variable.variableCollectionId);
+      if (!collection) {
+        const fetched = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId);
+        if (!fetched) continue;
+        collection = fetched;
+        collectionCache.set(variable.variableCollectionId, collection);
+        collectionPriority.set(variable.variableCollectionId, getCollectionPriority(collection.name));
+      }
+
+      // Resolve value — follow alias chains to get the actual RGB
+      let value = variable.valuesByMode[collection.defaultModeId];
+      let resolveDepth = 0;
+      while (value && typeof value === 'object' && 'type' in value && (value as any).type === 'VARIABLE_ALIAS' && resolveDepth < 10) {
+        const aliasedVar = await figma.variables.getVariableByIdAsync((value as any).id);
+        if (!aliasedVar) { value = null; break; }
+        const aliasedModeId = Object.keys(aliasedVar.valuesByMode)[0];
+        if (!aliasedModeId) { value = null; break; }
+        value = aliasedVar.valuesByMode[aliasedModeId];
+        resolveDepth++;
+      }
+
       if (!value || typeof value !== 'object' || !('r' in value)) continue;
 
       const rgb = value as RGB;
@@ -1124,6 +1304,16 @@ export async function handleBindMatchingColors(command: FigmaCommand): Promise<C
         colorMap.set(hex, []);
       }
       colorMap.get(hex)!.push(variable);
+    }
+
+    // Sort each hex bucket by collection priority (highest first)
+    // So Token-level variables are preferred over Primitives
+    for (const [hex, variables] of colorMap.entries()) {
+      variables.sort((a, b) => {
+        const prioA = collectionPriority.get(a.variableCollectionId) || 0;
+        const prioB = collectionPriority.get(b.variableCollectionId) || 0;
+        return prioB - prioA; // Higher priority first
+      });
     }
 
     if (colorMap.size === 0) {

@@ -1,6 +1,5 @@
-import puppeteer, { type Browser, type Page } from 'puppeteer-core';
-import { execSync } from 'child_process';
-import { existsSync } from 'fs';
+import { type Browser, type Page } from 'puppeteer-core';
+import { validateUrl, rgbToHex, launchBrowser } from './browserUtils.js';
 
 interface ResolvedFont {
   cssName: string;
@@ -36,10 +35,30 @@ interface ColorToken {
   count: number;
 }
 
+interface CSSVariableValue {
+  light: string | null;
+  dark: string | null;
+}
+
+interface CSSVariablesResult {
+  /** Which mode :root represents — detected by checking for [data-theme] selectors */
+  rootMode: 'light' | 'dark' | 'unknown';
+  /** How rootMode was determined */
+  detectionMethod: string;
+  /** The selector used for the alternate theme (e.g., '[data-theme="light"]') */
+  themeSelectors: { light: string | null; dark: string | null };
+  /** CSS custom properties with resolved light/dark values */
+  variables: Record<string, CSSVariableValue>;
+  /** Total custom properties found */
+  totalFound: number;
+}
+
 interface ExtractionResult {
   success: boolean;
   url: string;
   tokens: ExtractedTokens;
+  /** CSS custom properties extracted with light/dark mode values */
+  cssVariables?: CSSVariablesResult;
   meta: {
     extractedAt: string;
     elementsScanned: number;
@@ -56,57 +75,7 @@ interface ExtractionOptions {
   viewport?: { width: number; height: number };
 }
 
-// Find Chrome executable path
-function findChromePath(): string {
-  const paths = {
-    win32: [
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-      process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
-    ],
-    darwin: [
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      '/Applications/Chromium.app/Contents/MacOS/Chromium',
-    ],
-    linux: [
-      '/usr/bin/google-chrome',
-      '/usr/bin/chromium-browser',
-      '/usr/bin/chromium',
-    ],
-  };
-
-  const platform = process.platform as keyof typeof paths;
-  const candidates = paths[platform] || paths.linux;
-
-  for (const p of candidates) {
-    if (existsSync(p)) {
-      return p;
-    }
-  }
-
-  // Try to find via 'where' command on Windows
-  if (platform === 'win32') {
-    try {
-      const result = execSync('where chrome', { encoding: 'utf-8' }).trim().split('\n')[0];
-      if (result && existsSync(result)) return result;
-    } catch {}
-  }
-
-  throw new Error('Chrome not found. Please install Google Chrome.');
-}
-
-// Convert RGB to Hex
-function rgbToHex(rgb: string): string {
-  // Handle rgb(r, g, b) format
-  const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-  if (match) {
-    const r = parseInt(match[1]);
-    const g = parseInt(match[2]);
-    const b = parseInt(match[3]);
-    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
-  }
-  return rgb;
-}
+// findChromePath, rgbToHex, validateUrl imported from browserUtils.ts
 
 // Generic fonts to skip
 const GENERIC_FONTS = ['sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-sans-serif', 'ui-serif', 'ui-monospace'];
@@ -225,6 +194,251 @@ async function resolveFontName(page: Page, cssName: string): Promise<ResolvedFon
   }
 }
 
+/**
+ * Extract CSS custom properties (--*) from stylesheets and detect theme direction.
+ *
+ * Theme detection strategy:
+ * 1. Check for [data-theme="light"] selector → :root is dark
+ * 2. Check for [data-theme="dark"] selector → :root is light
+ * 3. Check for .dark / .light class selectors on html/body
+ * 4. Check prefers-color-scheme media queries
+ * 5. Heuristic: if :root --background is very dark → :root is dark
+ */
+async function extractCSSVariables(page: Page): Promise<CSSVariablesResult> {
+  console.log('[Extractor] Extracting CSS custom properties...');
+
+  const result = await page.evaluate(`
+    (function() {
+      var rootVars = {};
+      var themeOverrides = {};
+      var detectedSelectors = {
+        light: null,
+        dark: null
+      };
+
+      // Theme selector patterns to check (in priority order)
+      var lightSelectors = [
+        '[data-theme="light"]',
+        '[data-theme=light]',
+        '[data-mode="light"]',
+        '[data-color-scheme="light"]',
+        'html.light',
+        'body.light',
+        '.light-theme',
+        '.theme-light'
+      ];
+      var darkSelectors = [
+        '[data-theme="dark"]',
+        '[data-theme=dark]',
+        '[data-mode="dark"]',
+        '[data-color-scheme="dark"]',
+        'html.dark',
+        'body.dark',
+        '.dark-theme',
+        '.theme-dark'
+      ];
+
+      // Scan all stylesheets for :root vars and theme overrides
+      var sheets = document.styleSheets;
+      for (var s = 0; s < sheets.length; s++) {
+        try {
+          var rules = sheets[s].cssRules || sheets[s].rules;
+          if (!rules) continue;
+
+          for (var r = 0; r < rules.length; r++) {
+            var rule = rules[r];
+
+            // Handle @media (prefers-color-scheme) rules
+            if (rule.type === CSSRule.MEDIA_RULE) {
+              var mediaText = rule.media.mediaText || '';
+              var isDarkMedia = mediaText.indexOf('prefers-color-scheme: dark') >= 0;
+              var isLightMedia = mediaText.indexOf('prefers-color-scheme: light') >= 0;
+              if (isDarkMedia || isLightMedia) {
+                var innerRules = rule.cssRules || rule.rules;
+                for (var ir = 0; ir < (innerRules ? innerRules.length : 0); ir++) {
+                  var innerRule = innerRules[ir];
+                  if (innerRule.type === CSSRule.STYLE_RULE && innerRule.selectorText &&
+                      (innerRule.selectorText === ':root' || innerRule.selectorText === 'html' || innerRule.selectorText === 'body')) {
+                    var innerStyle = innerRule.style;
+                    var mode = isDarkMedia ? 'dark' : 'light';
+                    if (!detectedSelectors[mode]) {
+                      detectedSelectors[mode] = '@media (prefers-color-scheme: ' + mode + ')';
+                    }
+                    for (var ip = 0; ip < innerStyle.length; ip++) {
+                      var iProp = innerStyle[ip];
+                      if (iProp.startsWith('--')) {
+                        if (!themeOverrides[mode]) themeOverrides[mode] = {};
+                        themeOverrides[mode][iProp] = innerStyle.getPropertyValue(iProp).trim();
+                      }
+                    }
+                  }
+                }
+              }
+              continue;
+            }
+
+            if (rule.type !== CSSRule.STYLE_RULE) continue;
+            var selector = rule.selectorText || '';
+            var style = rule.style;
+
+            // :root / html / body base vars
+            if (selector === ':root' || selector === 'html' || selector === 'body' || selector === ':root, :host') {
+              for (var p = 0; p < style.length; p++) {
+                var prop = style[p];
+                if (prop.startsWith('--')) {
+                  rootVars[prop] = style.getPropertyValue(prop).trim();
+                }
+              }
+            }
+
+            // Check for theme override selectors
+            for (var li = 0; li < lightSelectors.length; li++) {
+              if (selector.indexOf(lightSelectors[li]) >= 0) {
+                if (!detectedSelectors.light) detectedSelectors.light = lightSelectors[li];
+                for (var lp = 0; lp < style.length; lp++) {
+                  var lProp = style[lp];
+                  if (lProp.startsWith('--')) {
+                    if (!themeOverrides.light) themeOverrides.light = {};
+                    themeOverrides.light[lProp] = style.getPropertyValue(lProp).trim();
+                  }
+                }
+                break;
+              }
+            }
+            for (var di = 0; di < darkSelectors.length; di++) {
+              if (selector.indexOf(darkSelectors[di]) >= 0) {
+                if (!detectedSelectors.dark) detectedSelectors.dark = darkSelectors[di];
+                for (var dp = 0; dp < style.length; dp++) {
+                  var dProp = style[dp];
+                  if (dProp.startsWith('--')) {
+                    if (!themeOverrides.dark) themeOverrides.dark = {};
+                    themeOverrides.dark[dProp] = style.getPropertyValue(dProp).trim();
+                  }
+                }
+                break;
+              }
+            }
+          }
+        } catch (e) {
+          // CORS: can't read cross-origin stylesheets — skip silently
+        }
+      }
+
+      // Also get computed :root vars (catches vars set by JS or inline styles)
+      var computedRoot = getComputedStyle(document.documentElement);
+      for (var c = 0; c < computedRoot.length; c++) {
+        var cProp = computedRoot[c];
+        if (cProp.startsWith('--') && !rootVars[cProp]) {
+          rootVars[cProp] = computedRoot.getPropertyValue(cProp).trim();
+        }
+      }
+
+      return {
+        rootVars: rootVars,
+        themeOverrides: themeOverrides,
+        detectedSelectors: detectedSelectors,
+        totalFound: Object.keys(rootVars).length
+      };
+    })()
+  `) as {
+    rootVars: Record<string, string>;
+    themeOverrides: Record<string, Record<string, string>>;
+    detectedSelectors: { light: string | null; dark: string | null };
+    totalFound: number;
+  };
+
+  // Determine which mode :root represents
+  let rootMode: 'light' | 'dark' | 'unknown' = 'unknown';
+  let detectionMethod = 'none';
+
+  const hasLightOverride = result.detectedSelectors.light !== null;
+  const hasLightVars = result.themeOverrides.light && Object.keys(result.themeOverrides.light).length > 0;
+  const hasDarkOverride = result.detectedSelectors.dark !== null;
+  const hasDarkVars = result.themeOverrides.dark && Object.keys(result.themeOverrides.dark).length > 0;
+
+  if (hasLightOverride && hasLightVars && !hasDarkVars) {
+    // Light override exists but no dark override → :root IS dark
+    rootMode = 'dark';
+    detectionMethod = `Found ${result.detectedSelectors.light} overrides with no dark overrides → :root is dark`;
+  } else if (hasDarkOverride && hasDarkVars && !hasLightVars) {
+    // Dark override exists but no light override → :root IS light
+    rootMode = 'light';
+    detectionMethod = `Found ${result.detectedSelectors.dark} overrides with no light overrides → :root is light`;
+  } else if (hasLightVars && hasDarkVars) {
+    // Both exist — heuristic: check a background-ish variable
+    const bgVarNames = ['--default-background', '--background', '--bg', '--color-background', '--bg-primary', '--color-bg'];
+    let bgValue = '';
+    for (const name of bgVarNames) {
+      if (result.rootVars[name]) { bgValue = result.rootVars[name]; break; }
+    }
+    if (bgValue) {
+      // Simple lightness heuristic on the value
+      const isLikelyDark = /^#[0-3]/.test(bgValue) || /^rgb\(\s*[0-3]\d?\s*,/.test(bgValue);
+      rootMode = isLikelyDark ? 'dark' : 'light';
+      detectionMethod = `Both themes found; background var "${bgValue}" suggests :root is ${rootMode}`;
+    } else {
+      rootMode = 'unknown';
+      detectionMethod = 'Both light and dark overrides found, could not determine :root mode from background variable';
+    }
+  } else if (!hasLightVars && !hasDarkVars) {
+    // No theme overrides at all — single theme site, assume light (convention)
+    rootMode = 'light';
+    detectionMethod = 'No theme override selectors found — assuming :root is light (convention)';
+  }
+
+  console.log(`[Extractor] Theme detection: rootMode=${rootMode} (${detectionMethod})`);
+  console.log(`[Extractor] Found ${result.totalFound} CSS custom properties, light overrides: ${hasLightVars ? Object.keys(result.themeOverrides.light!).length : 0}, dark overrides: ${hasDarkVars ? Object.keys(result.themeOverrides.dark!).length : 0}`);
+
+  // Build the unified variables map with correct light/dark assignments
+  const variables: Record<string, CSSVariableValue> = {};
+
+  for (const [name, value] of Object.entries(result.rootVars)) {
+    const lightOverride = result.themeOverrides.light?.[name];
+    const darkOverride = result.themeOverrides.dark?.[name];
+
+    if (rootMode === 'dark') {
+      // :root values are dark, light overrides are light
+      variables[name] = {
+        dark: value,
+        light: lightOverride || null,
+      };
+    } else if (rootMode === 'light') {
+      // :root values are light, dark overrides are dark
+      variables[name] = {
+        light: value,
+        dark: darkOverride || null,
+      };
+    } else {
+      // Unknown — put :root as light (convention), overrides as-is
+      variables[name] = {
+        light: value,
+        dark: darkOverride || null,
+      };
+    }
+  }
+
+  // Include any override-only vars not in :root
+  for (const mode of ['light', 'dark'] as const) {
+    const overrides = result.themeOverrides[mode];
+    if (!overrides) continue;
+    for (const [name, value] of Object.entries(overrides)) {
+      if (!variables[name]) {
+        variables[name] = { light: null, dark: null };
+      }
+      // Override values go to the mode matching the selector, not the rootMode
+      variables[name][mode] = value;
+    }
+  }
+
+  return {
+    rootMode,
+    detectionMethod,
+    themeSelectors: result.detectedSelectors,
+    variables,
+    totalFound: result.totalFound,
+  };
+}
+
 // Parse pixel value to number
 function parsePixelValue(value: string): number | null {
   if (!value || value === 'none' || value === 'auto' || value === 'normal') return null;
@@ -236,59 +450,6 @@ function parsePixelValue(value: string): number | null {
   return null;
 }
 
-// SSRF protection: validate URLs before passing to Puppeteer
-function validateUrl(url: string): void {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    throw new Error(`Invalid URL: ${url}`);
-  }
-
-  // Only allow http and https protocols
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
-    throw new Error(`Blocked protocol "${parsed.protocol}" — only http: and https: are allowed`);
-  }
-
-  const hostname = parsed.hostname.toLowerCase();
-
-  // Block localhost and loopback
-  if (hostname === 'localhost' || hostname === '::1') {
-    throw new Error(`Blocked request to localhost/loopback address: ${hostname}`);
-  }
-
-  // Check IP-based hostnames for private/reserved ranges
-  // Match IPv4 addresses (including those in brackets or mapped formats)
-  const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (ipv4Match) {
-    const [, a, b, c, d] = ipv4Match.map(Number);
-
-    // 127.x.x.x — loopback
-    if (a === 127) {
-      throw new Error(`Blocked request to loopback address: ${hostname}`);
-    }
-    // 0.0.0.0
-    if (a === 0 && b === 0 && c === 0 && d === 0) {
-      throw new Error(`Blocked request to 0.0.0.0`);
-    }
-    // 10.x.x.x — private
-    if (a === 10) {
-      throw new Error(`Blocked request to private IP range (10.x.x.x): ${hostname}`);
-    }
-    // 172.16.0.0 – 172.31.255.255 — private
-    if (a === 172 && b >= 16 && b <= 31) {
-      throw new Error(`Blocked request to private IP range (172.16-31.x.x): ${hostname}`);
-    }
-    // 192.168.x.x — private
-    if (a === 192 && b === 168) {
-      throw new Error(`Blocked request to private IP range (192.168.x.x): ${hostname}`);
-    }
-    // 169.254.x.x — link-local / cloud metadata (AWS 169.254.169.254)
-    if (a === 169 && b === 254) {
-      throw new Error(`Blocked request to link-local/metadata address (169.254.x.x): ${hostname}`);
-    }
-  }
-}
 
 export async function extractWebsiteCSS(url: string, options?: ExtractionOptions): Promise<ExtractionResult> {
   const startTime = Date.now();
@@ -300,14 +461,7 @@ export async function extractWebsiteCSS(url: string, options?: ExtractionOptions
   validateUrl(url);
 
   try {
-    const chromePath = findChromePath();
-    console.log(`[Extractor] Using Chrome at: ${chromePath}`);
-
-    browser = await puppeteer.launch({
-      executablePath: chromePath,
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    browser = await launchBrowser();
 
     const page: Page = await browser.newPage();
 
@@ -318,12 +472,33 @@ export async function extractWebsiteCSS(url: string, options?: ExtractionOptions
     // Navigate to URL
     console.log(`[Extractor] Navigating to: ${url}`);
     await page.goto(url, {
-      waitUntil: 'networkidle0',
-      timeout: 30000,
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
     });
+    // Wait for JS rendering after DOM is loaded
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Wait a bit for any animations/lazy loading
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for initial render
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Scroll the page to trigger lazy-loaded content, then scroll back
+    console.log('[Extractor] Scrolling page to trigger lazy loading...');
+    await page.evaluate(`
+      (async function() {
+        var totalHeight = document.documentElement.scrollHeight;
+        var viewportHeight = window.innerHeight;
+        var scrollStep = Math.floor(viewportHeight * 0.8);
+        var currentScroll = 0;
+        while (currentScroll < totalHeight) {
+          window.scrollTo(0, currentScroll);
+          currentScroll += scrollStep;
+          await new Promise(function(r) { setTimeout(r, 200); });
+          totalHeight = document.documentElement.scrollHeight;
+        }
+        window.scrollTo(0, 0);
+        await new Promise(function(r) { setTimeout(r, 500); });
+      })()
+    `);
 
     // Extract all computed styles using a string function to avoid tsx compilation issues
     console.log('[Extractor] Extracting computed styles...');
@@ -500,19 +675,17 @@ export async function extractWebsiteCSS(url: string, options?: ExtractionOptions
       elementsScanned: number;
     };
 
-    // Resolve font names before closing browser
-    console.log('[Extractor] Resolving font names...');
-    const resolvedFonts: ResolvedFont[] = [];
-    const fontsToResolve = extractedData.fontFamilies.filter(
-      f => !GENERIC_FONTS.includes(f.toLowerCase())
-    );
-
-    for (const fontName of fontsToResolve) {
-      const resolved = await resolveFontName(page, fontName);
-      resolvedFonts.push(resolved);
+    // Extract CSS custom properties with theme mode detection
+    // Must be done while still on the target page
+    let cssVariables: CSSVariablesResult | undefined;
+    try {
+      cssVariables = await extractCSSVariables(page);
+    } catch (err) {
+      console.error('[Extractor] CSS variable extraction failed:', err);
+      errors.push(`CSS variable extraction failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // Capture screenshot if requested (before closing browser)
+    // Capture screenshot BEFORE font resolution (which navigates away from the page)
     let screenshot: string | undefined;
     if (opts.captureScreenshot) {
       console.log('[Extractor] Capturing screenshot...');
@@ -523,6 +696,18 @@ export async function extractWebsiteCSS(url: string, options?: ExtractionOptions
       });
       screenshot = screenshotBuffer as string;
       console.log(`[Extractor] Screenshot captured (${screenshot.length} bytes base64)`);
+    }
+
+    // Resolve font names (navigates to MyFonts for verification — must be after screenshot)
+    console.log('[Extractor] Resolving font names...');
+    const resolvedFonts: ResolvedFont[] = [];
+    const fontsToResolve = extractedData.fontFamilies.filter(
+      f => !GENERIC_FONTS.includes(f.toLowerCase())
+    );
+
+    for (const fontName of fontsToResolve) {
+      const resolved = await resolveFontName(page, fontName);
+      resolvedFonts.push(resolved);
     }
 
     await browser.close();
@@ -575,6 +760,7 @@ export async function extractWebsiteCSS(url: string, options?: ExtractionOptions
       success: true,
       url,
       tokens,
+      cssVariables,
       meta: {
         extractedAt: new Date().toISOString(),
         elementsScanned: extractedData.elementsScanned,

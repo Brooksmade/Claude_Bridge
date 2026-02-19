@@ -37,6 +37,7 @@ export {
   handleDeleteVariableCollection,
   handleCreateVariable,
   handleEditVariable,
+  handleBatchEditVariable,
   handleDeleteVariable,
   handleBindVariable,
   handleBindFillVariable,
@@ -318,6 +319,7 @@ import {
   handleDeleteVariableCollection,
   handleCreateVariable,
   handleEditVariable,
+  handleBatchEditVariable,
   handleDeleteVariable,
   handleBindVariable,
   handleBindFillVariable,
@@ -675,6 +677,9 @@ export async function executeCommand(command: FigmaCommand): Promise<CommandResu
 
       case 'editVariable':
         return handleEditVariable(command);
+
+      case 'batchEditVariable':
+        return handleBatchEditVariable(command);
 
       case 'deleteVariable':
         return handleDeleteVariable(command);

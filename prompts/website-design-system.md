@@ -33,6 +33,7 @@ curl -s "http://localhost:4001/results/abc123?wait=true"
 | Category | Examples |
 |----------|----------|
 | Colors | All computed colors from text, backgrounds, borders |
+| **CSS Variables** | **All `--*` custom properties with light AND dark mode values** |
 | Font Families | Inter, Roboto, custom fonts |
 | Font Sizes | 12, 14, 16, 18, 24, 32, etc. |
 | Font Weights | 400, 500, 600, 700 |
@@ -45,6 +46,16 @@ curl -s "http://localhost:4001/results/abc123?wait=true"
 | Opacity | 0.5, 0.7, 0.9 |
 | Z-Index | 1, 10, 100, 1000 |
 | Container Widths | 640, 768, 1024, 1280 |
+
+### Theme Mode Detection
+
+The extractor automatically detects whether `:root` contains light or dark mode values. **Do NOT assume `:root` = light mode.** Some sites use dark-first themes where `:root` contains dark values and `[data-theme="light"]` provides light overrides.
+
+The `cssVariables` field in the response contains:
+- `rootMode` — `"light"`, `"dark"`, or `"unknown"`
+- `variables` — Each CSS custom property with correctly assigned `light` and `dark` values
+
+Always use `cssVariables.variables[name].light` and `.dark` for Token variable creation — these are already mapped to the correct mode regardless of the site's theme direction.
 
 ---
 
