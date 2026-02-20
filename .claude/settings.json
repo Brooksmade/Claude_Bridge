@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/cleanup-tmp.sh\"",
+            "timeout": 10,
+            "statusMessage": "Cleaning .tmp/ directory..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/cleanup-tmp.sh\"",
+            "timeout": 10,
+            "statusMessage": "Cleaning .tmp/ directory..."
+          }
+        ]
+      }
+    ]
+  }
+}
