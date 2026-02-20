@@ -25,6 +25,7 @@ Claude Code ← HTTP GET ← Bridge Server
 - Node.js 16+
 - pnpm (or npm)
 - Figma desktop or web app
+- [Figma MCP server](https://www.npmjs.com/package/@anthropic-ai/claude-code-figma-mcp) (used by website-to-figma capture, screenshots in QA/audit workflows, and design implementation)
 
 ## Quick Start
 
