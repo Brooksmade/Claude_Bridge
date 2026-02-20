@@ -2,7 +2,9 @@
 
 A real-time bridge that enables Claude Code to create, modify, and manipulate design elements directly on Figma canvases through natural language commands.
 
-**Current Version:** 1.3.0 | **Commands:** 136+ | **Workflows:** 9 slash commands | **Agents:** 30 | **Last Updated:** February 2025
+**Current Version:** 1.3.0 | **Commands:** 136+ | **Workflows:** 9 slash commands | **Agents:** 31 | **Last Updated:** February 2025
+
+**[View Pipeline & Agent Workflows (FigJam)](https://www.figma.com/board/FlZ6wXhS4pwOaUJIDnGaRS/Claude-Figma-Bridge---Pipeline---Agent-Workflows?node-id=0-1&t=sc5z843n81FYYugn-1)** — Visual diagrams of all 9 core pipelines and 31 agent workflows
 
 ## Overview
 
