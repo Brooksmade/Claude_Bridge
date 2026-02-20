@@ -2,6 +2,8 @@
 
 Design and create workflow diagrams in FigJam with native, editable elements.
 
+> **CRITICAL:** ALWAYS use bridge server commands (`createSection`, `createShapeWithText`, `createConnector` at `localhost:4001`) to create FigJam diagrams. NEVER use MCP tools like `generate_diagram` — they create separate files instead of drawing in the user's open FigJam board. Only use MCP Figma tools for FigJam if the user explicitly requests it.
+
 ## Chart Type Selection Workflow
 
 **BEFORE creating any diagram, determine the chart type and load the appropriate prompt.**
@@ -479,7 +481,31 @@ Use `startMagnet` and `endMagnet` to control where connectors attach to shapes:
 - `DIAMOND_FILLED` - Diamond shape
 - `CIRCLE_FILLED` - Circle shape
 
-### 6. Text Width Reference
+### 6. Parent Wrapper Section (MUST Be Created FIRST)
+
+Every workflow diagram must be wrapped in a named parent section. **The parent section MUST be created BEFORE any child elements** — FigJam sections only capture elements created after the section exists. If you create the section last, it will float on top and not adopt the children.
+
+**Creation order:**
+1. Calculate all positions and the full bounding box FIRST
+2. Create the parent wrapper section (bounding box + 60px padding on all sides)
+3. THEN create child sections, shapes, and connectors inside it
+
+```json
+{
+  "type": "createSection",
+  "payload": {
+    "name": "WF1: Design System from Figma File",
+    "x": minX - 60,
+    "y": minY - 60,
+    "width": (maxX - minX) + 120,
+    "height": (maxY - minY) + 120
+  }
+}
+```
+
+**NEVER create the parent section after the child elements** — it will not capture them.
+
+### 7. Text Width Reference
 
 **Approximate character widths by font size (Inter Regular):**
 

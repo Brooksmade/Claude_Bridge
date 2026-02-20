@@ -2,6 +2,8 @@
 
 Create workflow diagrams, flowcharts, and process maps in FigJam using native, editable shapes.
 
+> **CRITICAL:** ALWAYS use bridge server commands (`createSection`, `createShapeWithText`, `createConnector` at `localhost:4001`) to create FigJam diagrams. NEVER use MCP tools like `generate_diagram` — they create separate files instead of drawing in the user's open FigJam board. Only use MCP Figma tools for FigJam if the user explicitly requests it.
+
 **IMPORTANT:** For full implementation details, also read `.claude/agents/figjam-workflow-design.md`
 
 ## Workflow
@@ -126,7 +128,17 @@ curl -s -X POST http://localhost:4001/commands -H "Content-Type: application/jso
 - Arrow at END only (`connectorEndStrokeCap: "ARROW_LINES"`)
 - Create ALL shapes first, THEN connectors
 
-### Step 9: Report
+### Step 8a: Create Parent Wrapper Section FIRST
+
+**BEFORE creating any child elements**, create the parent wrapper section:
+1. Calculate full bounding box from planned positions (Step 6)
+2. Add 60px padding on all sides
+3. Create the parent section with the workflow name (e.g., "WF1: Design System from Figma File")
+4. THEN proceed to create child sections, shapes, and connectors inside it
+
+**FigJam sections only capture elements created AFTER the section exists.** If you create the parent last, it floats on top and children are not adopted.
+
+### Step 10: Report
 
 Show what was created:
 - Sections: X
