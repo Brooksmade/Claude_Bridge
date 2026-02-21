@@ -340,6 +340,16 @@ Press `Ctrl+C` to stop the bridge server. It will:
 - **Prefer `describe` over `children`** - `query(children)` on large components can take 15+ minutes. Use `query(describe)` for fast structural overviews (1-2 seconds).
 - **Large JSON payloads** - Write to `.tmp/` directory (e.g., `.tmp/payload.json`) and use `curl -d @.tmp/payload.json`. Always delete temp files after use (`rm .tmp/payload.json`). **Never write temp files to the project root.**
 
+## Temp File Hygiene
+
+Session hooks (`.claude/hooks/cleanup-tmp.sh`) automatically clean `.tmp/` on session start and end. If the hook outputs `STRAY_TEMP_FILES_DETECTED`, it means temp files were found in the project root instead of `.tmp/`. **You MUST ask the user whether to delete each listed file before removing anything.** Do not silently delete root files — they may be intentional.
+
+Rules:
+- **All** temp/session files go in `.tmp/` — never the project root
+- `.tmp/` is auto-cleaned on session start and end (only `.gitkeep` survives)
+- If you create scripts, payloads, or state files during a session, put them in `.tmp/`
+- Delete temp files as soon as they're no longer needed, don't wait for session end
+
 ## Memory Integration
 
 Vector memory server at `http://localhost:8080` for tracking progress and solutions across sessions. Search before solving errors, save after fixing them. See `prompts/memory-server.md` for full API reference.

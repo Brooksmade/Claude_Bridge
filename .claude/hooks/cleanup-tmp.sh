@@ -21,9 +21,10 @@ STRAY_FILES=$(find "$PROJECT_DIR" -maxdepth 1 -type f \( \
 \) 2>/dev/null || true)
 
 if [ -n "$STRAY_FILES" ]; then
-  echo "WARNING: Stray temp files found in project root:" >&2
+  echo "STRAY_TEMP_FILES_DETECTED" >&2
+  echo "The following temp files were found in the project root instead of .tmp/:" >&2
   echo "$STRAY_FILES" >&2
-  echo "These should be in .tmp/ — consider moving or deleting them." >&2
+  echo "Ask the user whether to delete each file before removing anything." >&2
 fi
 
 exit 0
