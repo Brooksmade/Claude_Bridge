@@ -22,6 +22,9 @@ nul
 .vscode/
 .idea/
 
+# Plans (local planning docs)
+plans/
+
 # Temp files (session artifacts from Claude Code)
 .tmp/*
 !.tmp/.gitkeep

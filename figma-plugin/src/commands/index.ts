@@ -76,6 +76,8 @@ export {
   handleCreateComponentSet,
   handleAddVariant,
   handleEditComponentProperties,
+  handleSetComponentPropertyReferences,
+  handleGetComponentPropertyDefinitions,
   handleGetComponents,
 } from './components';
 export {
@@ -358,6 +360,8 @@ import {
   handleCreateComponentSet,
   handleAddVariant,
   handleEditComponentProperties,
+  handleSetComponentPropertyReferences,
+  handleGetComponentPropertyDefinitions,
   handleGetComponents,
 } from './components';
 import {
@@ -784,6 +788,12 @@ export async function executeCommand(command: FigmaCommand): Promise<CommandResu
 
       case 'editComponentProperties':
         return handleEditComponentProperties(command);
+
+      case 'setComponentPropertyReferences':
+        return handleSetComponentPropertyReferences(command);
+
+      case 'getComponentPropertyDefinitions':
+        return handleGetComponentPropertyDefinitions(command);
 
       case 'getComponents':
         return handleGetComponents(command);

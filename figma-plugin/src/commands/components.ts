@@ -92,6 +92,21 @@ function serializeComponent(component: ComponentNode | ComponentSetNode): object
         name: child.name,
       };
     });
+
+    // Get component property definitions (BOOLEAN, INSTANCE_SWAP, TEXT, VARIANT)
+    var setPropDefs = compSet.componentPropertyDefinitions;
+    if (setPropDefs) {
+      var setProps: Record<string, any> = {};
+      var setPropNames = Object.keys(setPropDefs);
+      for (var si = 0; si < setPropNames.length; si++) {
+        var spn = setPropNames[si];
+        setProps[spn] = {
+          type: setPropDefs[spn].type,
+          defaultValue: setPropDefs[spn].defaultValue,
+        };
+      }
+      result.properties = setProps;
+    }
   }
 
   return result;
@@ -343,7 +358,8 @@ export async function handleEditComponentProperties(command: FigmaCommand): Prom
 
     var component = node as ComponentNode | ComponentSetNode;
 
-    // Add new properties
+    // Add new properties (capture returned keys)
+    var addedKeys: Record<string, string> = {};
     if (payload.add && payload.add.length > 0) {
       for (var i = 0; i < payload.add.length; i++) {
         var prop = payload.add[i];
@@ -355,17 +371,27 @@ export async function handleEditComponentProperties(command: FigmaCommand): Prom
           defaultVal = defaultVal !== undefined ? String(defaultVal) : '';
         }
 
-        if (prop.type !== 'VARIANT' && component.type === 'COMPONENT') {
-          (component as ComponentNode).addComponentProperty(prop.name, prop.type, defaultVal);
+        if (prop.type !== 'VARIANT') {
+          var key: string;
+          if (component.type === 'COMPONENT') {
+            key = (component as ComponentNode).addComponentProperty(prop.name, prop.type, defaultVal);
+          } else {
+            key = (component as ComponentSetNode).addComponentProperty(prop.name, prop.type, defaultVal);
+          }
+          addedKeys[prop.name] = key;
         }
       }
     }
 
     // Remove properties
-    if (payload.remove && payload.remove.length > 0 && component.type === 'COMPONENT') {
+    if (payload.remove && payload.remove.length > 0) {
       for (var j = 0; j < payload.remove.length; j++) {
         try {
-          (component as ComponentNode).deleteComponentProperty(payload.remove[j]);
+          if (component.type === 'COMPONENT') {
+            (component as ComponentNode).deleteComponentProperty(payload.remove[j]);
+          } else {
+            (component as ComponentSetNode).deleteComponentProperty(payload.remove[j]);
+          }
         } catch (_e) {
           // Property may not exist
         }
@@ -387,9 +413,98 @@ export async function handleEditComponentProperties(command: FigmaCommand): Prom
       }
     }
 
+    var resultData = serializeComponent(component) as Record<string, any>;
+    resultData.addedKeys = addedKeys;
     return successResult(command.id, {
       nodeId: component.id,
-      data: serializeComponent(component),
+      data: resultData,
+    });
+  } catch (error) {
+    var message = error instanceof Error ? error.message : String(error);
+    return errorResult(command.id, message);
+  }
+}
+
+// Set componentPropertyReferences on a child node
+export async function handleSetComponentPropertyReferences(command: FigmaCommand): Promise<CommandResult> {
+  var payload = command.payload as {
+    nodeId: string;
+    references: Record<string, string>;
+  };
+
+  if (!payload.nodeId) {
+    return errorResult(command.id, 'Missing nodeId');
+  }
+  if (!payload.references) {
+    return errorResult(command.id, 'Missing references map');
+  }
+
+  try {
+    var node = await figma.getNodeByIdAsync(payload.nodeId);
+    if (!node) {
+      return errorResult(command.id, 'Node not found: ' + payload.nodeId);
+    }
+
+    if (!('componentPropertyReferences' in node)) {
+      return errorResult(command.id, 'Node does not support componentPropertyReferences: ' + node.type);
+    }
+
+    var sceneNode = node as SceneNode & { componentPropertyReferences: Record<string, string> | null };
+    // Merge with existing references
+    var existing = sceneNode.componentPropertyReferences || {};
+    var merged: Record<string, string> = {};
+    for (var key in existing) {
+      merged[key] = existing[key];
+    }
+    for (var key in payload.references) {
+      merged[key] = payload.references[key];
+    }
+    sceneNode.componentPropertyReferences = merged;
+
+    return successResult(command.id, {
+      nodeId: node.id,
+      references: sceneNode.componentPropertyReferences,
+    });
+  } catch (error) {
+    var message = error instanceof Error ? error.message : String(error);
+    return errorResult(command.id, message);
+  }
+}
+
+// Get component property definitions (works for both COMPONENT and COMPONENT_SET)
+export async function handleGetComponentPropertyDefinitions(command: FigmaCommand): Promise<CommandResult> {
+  var payload = command.payload as { componentId: string };
+
+  if (!payload.componentId) {
+    return errorResult(command.id, 'Missing componentId');
+  }
+
+  try {
+    var node = await figma.getNodeByIdAsync(payload.componentId);
+    if (!node) {
+      return errorResult(command.id, 'Node not found: ' + payload.componentId);
+    }
+
+    if (node.type !== 'COMPONENT' && node.type !== 'COMPONENT_SET') {
+      return errorResult(command.id, 'Node is not a component or component set');
+    }
+
+    var comp = node as ComponentNode | ComponentSetNode;
+    var defs = comp.componentPropertyDefinitions;
+    var result: Record<string, any> = {};
+
+    var keys = Object.keys(defs);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      result[k] = {
+        type: defs[k].type,
+        defaultValue: defs[k].defaultValue,
+      };
+    }
+
+    return successResult(command.id, {
+      nodeId: comp.id,
+      data: result,
     });
   } catch (error) {
     var message = error instanceof Error ? error.message : String(error);
