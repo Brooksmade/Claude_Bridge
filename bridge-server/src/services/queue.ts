@@ -11,6 +11,7 @@ interface LogEntry {
   type: 'info' | 'success' | 'error';
 }
 const pluginLogs: LogEntry[] = [];
+const errorLogs: LogEntry[] = [];  // Errors persist until server restart
 
 // Running command tracking
 interface RunningCommand {
@@ -202,14 +203,19 @@ export const queue = {
 
   // Add a log entry from the plugin
   addLog(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
-    pluginLogs.push({
+    const entry: LogEntry = {
       timestamp: Date.now(),
       message,
       type,
-    });
-    // Keep only last 200 logs
-    while (pluginLogs.length > 200) {
+    };
+    pluginLogs.push(entry);
+    // Keep last 600 command logs
+    while (pluginLogs.length > 600) {
       pluginLogs.shift();
+    }
+    // Errors are stored separately and never trimmed
+    if (type === 'error') {
+      errorLogs.push(entry);
     }
 
     // Track running commands based on log messages
@@ -226,13 +232,23 @@ export const queue = {
   },
 
   // Get recent logs
-  getLogs(limit: number = 50): LogEntry[] {
+  getLogs(limit: number = 150): LogEntry[] {
     return pluginLogs.slice(-limit);
+  },
+
+  // Get all errors (persisted until cleared)
+  getErrors(): LogEntry[] {
+    return errorLogs.slice();
   },
 
   // Clear logs
   clearLogs(): void {
     pluginLogs.length = 0;
+  },
+
+  // Clear errors
+  clearErrors(): void {
+    errorLogs.length = 0;
   },
 
   // Set currently running command

@@ -25,7 +25,7 @@ router.post('/', (req: Request, res: Response) => {
 // GET /logs - Get recent logs (called by Claude Code)
 router.get('/', (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = parseInt(req.query.limit as string) || 150;
     const logs = queue.getLogs(limit);
 
     res.json({
@@ -69,6 +69,34 @@ function formatDuration(ms: number): string {
   }
   return `${minutes}m`;
 }
+
+// GET /logs/errors - Get all errors (persisted until cleared)
+router.get('/errors', (req: Request, res: Response) => {
+  try {
+    const errors = queue.getErrors();
+    res.json({
+      count: errors.length,
+      errors: errors.map(log => ({
+        ...log,
+        time: new Date(log.timestamp).toLocaleTimeString('en-US', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+      })),
+    });
+  } catch (error) {
+    console.error('[Logs] Error getting errors:', error);
+    res.status(500).json({ error: 'Failed to get errors' });
+  }
+});
+
+// DELETE /logs/errors - Clear error log
+router.delete('/errors', (req: Request, res: Response) => {
+  queue.clearErrors();
+  res.json({ success: true, message: 'Errors cleared' });
+});
 
 // GET /logs/running - Get currently running command (for UI polling)
 router.get('/running', (req: Request, res: Response) => {
