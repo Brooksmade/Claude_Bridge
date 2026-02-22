@@ -1,0 +1,4214 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-02-22T19:10:45.391Z",
+  "commandCount": 239,
+  "commands": {
+    "ping": {
+      "type": "ping",
+      "category": "core",
+      "description": "Test connectivity with the Figma plugin. Returns {pong: true}.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "create": {
+      "type": "create",
+      "category": "core",
+      "description": "Create a new node in Figma (frame, rectangle, text, ellipse, etc.).",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeType": {
+            "type": "string",
+            "enum": [
+              "FRAME",
+              "RECTANGLE",
+              "ELLIPSE",
+              "TEXT",
+              "LINE",
+              "POLYGON",
+              "STAR",
+              "VECTOR",
+              "COMPONENT",
+              "GROUP"
+            ],
+            "description": "Type of node to create"
+          },
+          "properties": {
+            "type": "object",
+            "description": "Node properties to set",
+            "additionalProperties": true,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "fills": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokeWeight": {
+                "type": "number"
+              },
+              "cornerRadius": {
+                "type": "number"
+              },
+              "opacity": {
+                "type": "number"
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "locked": {
+                "type": "boolean"
+              },
+              "characters": {
+                "type": "string",
+                "description": "Text content (TEXT nodes)"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "layoutMode": {
+                "type": "string",
+                "enum": [
+                  "NONE",
+                  "HORIZONTAL",
+                  "VERTICAL"
+                ]
+              },
+              "itemSpacing": {
+                "type": "number"
+              },
+              "paddingLeft": {
+                "type": "number"
+              },
+              "paddingRight": {
+                "type": "number"
+              },
+              "paddingTop": {
+                "type": "number"
+              },
+              "paddingBottom": {
+                "type": "number"
+              }
+            }
+          },
+          "parent": {
+            "type": "string",
+            "description": "Parent node ID. Defaults to current page."
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "Nested child nodes to create"
+          }
+        },
+        "required": [
+          "nodeType"
+        ]
+      }
+    },
+    "batchCreate": {
+      "type": "batchCreate",
+      "category": "core",
+      "description": "Create multiple nodes in a single command. Payload is a direct array of CreatePayload objects.",
+      "returnsNodeIds": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "modify": {
+      "type": "modify",
+      "category": "core",
+      "description": "Modify properties of an existing node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "properties": {
+            "type": "object",
+            "description": "Node properties to set",
+            "additionalProperties": true,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "fills": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokeWeight": {
+                "type": "number"
+              },
+              "cornerRadius": {
+                "type": "number"
+              },
+              "opacity": {
+                "type": "number"
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "locked": {
+                "type": "boolean"
+              },
+              "characters": {
+                "type": "string",
+                "description": "Text content (TEXT nodes)"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "layoutMode": {
+                "type": "string",
+                "enum": [
+                  "NONE",
+                  "HORIZONTAL",
+                  "VERTICAL"
+                ]
+              },
+              "itemSpacing": {
+                "type": "number"
+              },
+              "paddingLeft": {
+                "type": "number"
+              },
+              "paddingRight": {
+                "type": "number"
+              },
+              "paddingTop": {
+                "type": "number"
+              },
+              "paddingBottom": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "properties"
+        ]
+      }
+    },
+    "batchModify": {
+      "type": "batchModify",
+      "category": "core",
+      "description": "Modify multiple nodes in a single command.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "move": {
+      "type": "move",
+      "category": "core",
+      "description": "Move a node to a new position.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "New X position"
+          },
+          "y": {
+            "type": "number",
+            "description": "New Y position"
+          }
+        }
+      }
+    },
+    "resize": {
+      "type": "resize",
+      "category": "core",
+      "description": "Resize a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "delete": {
+      "type": "delete",
+      "category": "core",
+      "description": "Delete a node by ID.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "batchDelete": {
+      "type": "batchDelete",
+      "category": "core",
+      "description": "Delete multiple nodes by IDs.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Figma node ID (e.g., \"1:23\")"
+            },
+            "description": "Array of node IDs to delete"
+          }
+        },
+        "required": [
+          "nodeIds"
+        ]
+      }
+    },
+    "clone": {
+      "type": "clone",
+      "category": "core",
+      "description": "Clone/duplicate a node.",
+      "requiresTarget": true,
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "group": {
+      "type": "group",
+      "category": "core",
+      "description": "Group multiple nodes together.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Figma node ID (e.g., \"1:23\")"
+            }
+          }
+        },
+        "required": [
+          "nodeIds"
+        ]
+      },
+      "returnsNodeId": true
+    },
+    "ungroup": {
+      "type": "ungroup",
+      "category": "core",
+      "description": "Ungroup a group node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "reparent": {
+      "type": "reparent",
+      "category": "core",
+      "description": "Move a node to a different parent.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "newParentId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "index": {
+            "type": "number",
+            "description": "Position within new parent"
+          }
+        },
+        "required": [
+          "newParentId"
+        ]
+      }
+    },
+    "renameNode": {
+      "type": "renameNode",
+      "category": "core",
+      "description": "Rename a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "New name for the node"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "query": {
+      "type": "query",
+      "category": "query",
+      "description": "Query nodes in Figma. queryType: \"node\" (single by target), \"selection\" (current selection), \"page\" (page children), \"children\" (node children — SLOW on large nodes, prefer \"describe\"), \"describe\" (fast structural overview).",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "queryType": {
+            "type": "string",
+            "enum": [
+              "node",
+              "selection",
+              "page",
+              "children",
+              "describe"
+            ],
+            "description": "Type of query"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Which properties to return"
+          }
+        },
+        "required": [
+          "queryType"
+        ]
+      },
+      "requiresTarget": true
+    },
+    "getFrames": {
+      "type": "getFrames",
+      "category": "query",
+      "description": "Get all top-level frames on the current page.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "select": {
+      "type": "select",
+      "category": "query",
+      "description": "Select nodes by their IDs.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Figma node ID (e.g., \"1:23\")"
+            }
+          }
+        },
+        "required": [
+          "nodeIds"
+        ]
+      }
+    },
+    "setPage": {
+      "type": "setPage",
+      "category": "query",
+      "description": "Switch to a different page.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "pageId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "pageName": {
+            "type": "string",
+            "description": "Page name (alternative to pageId)"
+          }
+        }
+      }
+    },
+    "getViewport": {
+      "type": "getViewport",
+      "category": "query",
+      "description": "Get the current viewport position and zoom.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "setViewport": {
+      "type": "setViewport",
+      "category": "query",
+      "description": "Set the viewport position and zoom.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "zoom": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "createVariableCollection": {
+      "type": "createVariableCollection",
+      "category": "variables",
+      "description": "Create a new variable collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Collection name"
+          },
+          "modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Mode names (e.g., [\"Light Mode\", \"Dark Mode\"])"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "createVariable": {
+      "type": "createVariable",
+      "category": "variables",
+      "description": "Create a variable in a collection. Use type \"COLOR\", \"FLOAT\", \"STRING\", or \"BOOLEAN\".",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Variable name (use \"/\" for groups)"
+          },
+          "collectionId": {
+            "type": "string",
+            "description": "Target collection ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "COLOR",
+              "FLOAT",
+              "STRING",
+              "BOOLEAN"
+            ],
+            "description": "Variable type"
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Values keyed by mode name"
+          },
+          "description": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "collectionId",
+          "type"
+        ]
+      }
+    },
+    "editVariable": {
+      "type": "editVariable",
+      "category": "variables",
+      "description": "Edit an existing variable. Use \"values\" (plural), not \"value\".",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "variableId": {
+            "type": "string",
+            "description": "Variable ID to edit"
+          },
+          "name": {
+            "type": "string"
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Values keyed by mode name"
+          },
+          "description": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hiddenFromPublishing": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "variableId"
+        ]
+      }
+    },
+    "batchEditVariable": {
+      "type": "batchEditVariable",
+      "category": "variables",
+      "description": "Edit multiple variables. Payload is a direct array of edit objects.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "deleteVariable": {
+      "type": "deleteVariable",
+      "category": "variables",
+      "description": "Delete a variable by ID.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "variableId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "variableId"
+        ]
+      }
+    },
+    "getVariables": {
+      "type": "getVariables",
+      "category": "variables",
+      "description": "Get all variables, optionally filtered by collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "description": "Filter by collection ID"
+          },
+          "collectionName": {
+            "type": "string",
+            "description": "Filter by collection name (case-sensitive)"
+          },
+          "includeValues": {
+            "type": "boolean",
+            "description": "Include hex values for COLOR variables"
+          }
+        }
+      }
+    },
+    "bindFillVariable": {
+      "type": "bindFillVariable",
+      "category": "variables",
+      "description": "Bind a fill variable to a node. nodeId goes in payload, NOT as target.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "variableId": {
+            "type": "string"
+          },
+          "fillIndex": {
+            "type": "number",
+            "description": "Fill index (default 0)"
+          }
+        },
+        "required": [
+          "nodeId",
+          "variableId"
+        ]
+      }
+    },
+    "bindStrokeVariable": {
+      "type": "bindStrokeVariable",
+      "category": "variables",
+      "description": "Bind a stroke variable to a node. nodeId goes in payload.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "variableId": {
+            "type": "string"
+          },
+          "strokeIndex": {
+            "type": "number",
+            "description": "Stroke index (default 0)"
+          }
+        },
+        "required": [
+          "nodeId",
+          "variableId"
+        ]
+      }
+    },
+    "bindMatchingColors": {
+      "type": "bindMatchingColors",
+      "category": "variables",
+      "description": "Automatically bind variables to nodes that match by color value. Resolves alias chains.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "Process children recursively"
+          }
+        },
+        "required": [
+          "nodeId"
+        ]
+      }
+    },
+    "autoBindByRole": {
+      "type": "autoBindByRole",
+      "category": "variables",
+      "description": "Bind variables by semantic role detection (Surface/Page, Text/Primary, Border/Default, etc.).",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "recursive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "nodeId"
+        ]
+      }
+    },
+    "autoBindSpacing": {
+      "type": "autoBindSpacing",
+      "category": "variables",
+      "description": "Automatically bind spacing variables to auto-layout nodes.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "recursive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "nodeId"
+        ]
+      }
+    },
+    "getVariableById": {
+      "type": "getVariableById",
+      "category": "variables",
+      "description": "Get a variable by ID with full valuesByMode.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "variableId": {
+            "type": "string"
+          },
+          "includeCollection": {
+            "type": "boolean",
+            "description": "Include parent collection info"
+          }
+        },
+        "required": [
+          "variableId"
+        ]
+      }
+    },
+    "createDesignSystem": {
+      "type": "createDesignSystem",
+      "category": "design-system",
+      "description": "Create a complete 4-level variable hierarchy (Primitive → Semantic → Tokens → Theme). Supports extracted tokens and conditional boilerplate.",
+      "longRunning": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "brandColors": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Brand colors: {primary: \"#hex\", secondary: \"#hex\", tertiary: \"#hex\"}"
+          },
+          "includeBoilerplate": {
+            "type": "boolean",
+            "description": "Include default boilerplate values (default true)"
+          },
+          "extractedTokens": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Tokens from extractDesignTokens"
+          },
+          "organizingPrinciple": {
+            "type": "string",
+            "enum": [
+              "four-level",
+              "three-level",
+              "two-level",
+              "material-design",
+              "tailwind"
+            ]
+          }
+        }
+      }
+    },
+    "validateDesignSystem": {
+      "type": "validateDesignSystem",
+      "category": "design-system",
+      "description": "Validate the design system structure, modes, naming, and alias chains.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "getDesignSystemStatus": {
+      "type": "getDesignSystemStatus",
+      "category": "design-system",
+      "description": "Get status of the current design system (collection counts, variable counts).",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "extractDesignTokens": {
+      "type": "extractDesignTokens",
+      "category": "design-system",
+      "description": "Extract design tokens (colors, typography, spacing, shadows) from a frame or the entire file.",
+      "longRunning": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "node",
+              "file"
+            ],
+            "description": "\"node\" for a specific frame, \"file\" for entire file"
+          }
+        }
+      }
+    },
+    "createPaintStyle": {
+      "type": "createPaintStyle",
+      "category": "styles",
+      "description": "Create a paint (color) style.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "paints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "SOLID"
+                  ]
+                },
+                "color": {
+                  "type": "object",
+                  "properties": {
+                    "r": {
+                      "type": "number",
+                      "description": "Red channel 0-1"
+                    },
+                    "g": {
+                      "type": "number",
+                      "description": "Green channel 0-1"
+                    },
+                    "b": {
+                      "type": "number",
+                      "description": "Blue channel 0-1"
+                    }
+                  },
+                  "required": [
+                    "r",
+                    "g",
+                    "b"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "description": "Opacity 0-1"
+                }
+              },
+              "required": [
+                "type",
+                "color"
+              ]
+            },
+            "description": "Array of paint fills"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "paints"
+        ]
+      }
+    },
+    "createTextStyle": {
+      "type": "createTextStyle",
+      "category": "styles",
+      "description": "Create a text style.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "fontFamily": {
+            "type": "string"
+          },
+          "fontStyle": {
+            "type": "string"
+          },
+          "fontSize": {
+            "type": "number"
+          },
+          "lineHeight": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "PIXELS",
+                  "PERCENT",
+                  "AUTO"
+                ]
+              }
+            }
+          },
+          "letterSpacing": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              },
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "PIXELS",
+                  "PERCENT"
+                ]
+              }
+            }
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "applyStyle": {
+      "type": "applyStyle",
+      "category": "styles",
+      "description": "Apply an existing style to a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "styleId": {
+            "type": "string"
+          },
+          "styleType": {
+            "type": "string",
+            "enum": [
+              "paint",
+              "text",
+              "effect",
+              "grid"
+            ]
+          }
+        },
+        "required": [
+          "styleId"
+        ]
+      }
+    },
+    "getStyles": {
+      "type": "getStyles",
+      "category": "styles",
+      "description": "Get all local styles.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "styleType": {
+            "type": "string",
+            "enum": [
+              "paint",
+              "text",
+              "effect",
+              "grid"
+            ],
+            "description": "Filter by style type"
+          }
+        }
+      }
+    },
+    "createComponent": {
+      "type": "createComponent",
+      "category": "components",
+      "description": "Create a component from node properties or convert an existing frame.",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "properties": {
+            "type": "object",
+            "description": "Node properties to set",
+            "additionalProperties": true,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "fills": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokeWeight": {
+                "type": "number"
+              },
+              "cornerRadius": {
+                "type": "number"
+              },
+              "opacity": {
+                "type": "number"
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "locked": {
+                "type": "boolean"
+              },
+              "characters": {
+                "type": "string",
+                "description": "Text content (TEXT nodes)"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "layoutMode": {
+                "type": "string",
+                "enum": [
+                  "NONE",
+                  "HORIZONTAL",
+                  "VERTICAL"
+                ]
+              },
+              "itemSpacing": {
+                "type": "number"
+              },
+              "paddingLeft": {
+                "type": "number"
+              },
+              "paddingRight": {
+                "type": "number"
+              },
+              "paddingTop": {
+                "type": "number"
+              },
+              "paddingBottom": {
+                "type": "number"
+              }
+            }
+          },
+          "parent": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "fromNodeId": {
+            "type": "string",
+            "description": "Convert existing node to component"
+          }
+        }
+      }
+    },
+    "createComponentSet": {
+      "type": "createComponentSet",
+      "category": "components",
+      "description": "Create a component set (variant group).",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "componentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Figma node ID (e.g., \"1:23\")"
+            },
+            "description": "Component IDs to group as variants"
+          }
+        },
+        "required": [
+          "componentIds"
+        ]
+      }
+    },
+    "createInstance": {
+      "type": "createInstance",
+      "category": "components",
+      "description": "Create an instance of a component.",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "componentId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "properties": {
+            "type": "object",
+            "description": "Node properties to set",
+            "additionalProperties": true,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "fills": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SOLID"
+                      ]
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "r": {
+                          "type": "number",
+                          "description": "Red channel 0-1"
+                        },
+                        "g": {
+                          "type": "number",
+                          "description": "Green channel 0-1"
+                        },
+                        "b": {
+                          "type": "number",
+                          "description": "Blue channel 0-1"
+                        }
+                      },
+                      "required": [
+                        "r",
+                        "g",
+                        "b"
+                      ]
+                    },
+                    "opacity": {
+                      "type": "number",
+                      "description": "Opacity 0-1"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "color"
+                  ]
+                },
+                "description": "Array of paint fills"
+              },
+              "strokeWeight": {
+                "type": "number"
+              },
+              "cornerRadius": {
+                "type": "number"
+              },
+              "opacity": {
+                "type": "number"
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "locked": {
+                "type": "boolean"
+              },
+              "characters": {
+                "type": "string",
+                "description": "Text content (TEXT nodes)"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "layoutMode": {
+                "type": "string",
+                "enum": [
+                  "NONE",
+                  "HORIZONTAL",
+                  "VERTICAL"
+                ]
+              },
+              "itemSpacing": {
+                "type": "number"
+              },
+              "paddingLeft": {
+                "type": "number"
+              },
+              "paddingRight": {
+                "type": "number"
+              },
+              "paddingTop": {
+                "type": "number"
+              },
+              "paddingBottom": {
+                "type": "number"
+              }
+            }
+          },
+          "parent": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          }
+        },
+        "required": [
+          "componentId"
+        ]
+      }
+    },
+    "getComponents": {
+      "type": "getComponents",
+      "category": "components",
+      "description": "Get all components in the file.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "setAutoLayout": {
+      "type": "setAutoLayout",
+      "category": "layout",
+      "description": "Set auto-layout properties on a frame.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "layoutMode": {
+            "type": "string",
+            "enum": [
+              "HORIZONTAL",
+              "VERTICAL",
+              "NONE"
+            ]
+          },
+          "primaryAxisAlignItems": {
+            "type": "string",
+            "enum": [
+              "MIN",
+              "CENTER",
+              "MAX",
+              "SPACE_BETWEEN"
+            ]
+          },
+          "counterAxisAlignItems": {
+            "type": "string",
+            "enum": [
+              "MIN",
+              "CENTER",
+              "MAX",
+              "BASELINE"
+            ]
+          },
+          "itemSpacing": {
+            "type": "number"
+          },
+          "paddingLeft": {
+            "type": "number"
+          },
+          "paddingRight": {
+            "type": "number"
+          },
+          "paddingTop": {
+            "type": "number"
+          },
+          "paddingBottom": {
+            "type": "number"
+          },
+          "primaryAxisSizingMode": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "AUTO"
+            ]
+          },
+          "counterAxisSizingMode": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "AUTO"
+            ]
+          },
+          "layoutWrap": {
+            "type": "string",
+            "enum": [
+              "NO_WRAP",
+              "WRAP"
+            ]
+          }
+        }
+      }
+    },
+    "setConstraints": {
+      "type": "setConstraints",
+      "category": "layout",
+      "description": "Set constraints on a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "horizontal": {
+            "type": "string",
+            "enum": [
+              "MIN",
+              "CENTER",
+              "MAX",
+              "STRETCH",
+              "SCALE"
+            ]
+          },
+          "vertical": {
+            "type": "string",
+            "enum": [
+              "MIN",
+              "CENTER",
+              "MAX",
+              "STRETCH",
+              "SCALE"
+            ]
+          }
+        }
+      }
+    },
+    "exportNode": {
+      "type": "exportNode",
+      "category": "export",
+      "description": "Export a node as PNG, SVG, JPG, or PDF.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string",
+            "enum": [
+              "PNG",
+              "SVG",
+              "JPG",
+              "PDF"
+            ]
+          },
+          "scale": {
+            "type": "number",
+            "description": "Export scale (1, 2, 3, etc.)"
+          }
+        }
+      }
+    },
+    "createPage": {
+      "type": "createPage",
+      "category": "pages",
+      "description": "Create a new page.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Page name"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "createImage": {
+      "type": "createImage",
+      "category": "images",
+      "description": "Create an image node from base64 data. Use `data` field (NOT imageData).",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "description": "Base64-encoded image data"
+          },
+          "name": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "parent": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      }
+    },
+    "extractWebsiteCSS": {
+      "type": "extractWebsiteCSS",
+      "category": "website",
+      "description": "Extract CSS from a live website using headless browser. Returns colors, typography, spacing, shadows.",
+      "serverSide": true,
+      "longRunning": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Website URL to extract from"
+          },
+          "captureScreenshot": {
+            "type": "boolean"
+          },
+          "screenshotFullPage": {
+            "type": "boolean"
+          },
+          "viewport": {
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    },
+    "extractWebsiteLayout": {
+      "type": "extractWebsiteLayout",
+      "category": "website",
+      "description": "Extract layout structure from a website using headless browser.",
+      "serverSide": true,
+      "longRunning": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Website URL"
+          },
+          "captureScreenshot": {
+            "type": "boolean"
+          },
+          "screenshotFullPage": {
+            "type": "boolean"
+          },
+          "screenshotSections": {
+            "type": "boolean",
+            "description": "Capture per-section screenshots"
+          },
+          "dismissOverlays": {
+            "type": "boolean"
+          },
+          "maxElements": {
+            "type": "number"
+          },
+          "maxDepth": {
+            "type": "number"
+          },
+          "viewport": {
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    },
+    "createSection": {
+      "type": "createSection",
+      "category": "core",
+      "description": "Create a section node (FigJam).",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "fills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "SOLID"
+                  ]
+                },
+                "color": {
+                  "type": "object",
+                  "properties": {
+                    "r": {
+                      "type": "number",
+                      "description": "Red channel 0-1"
+                    },
+                    "g": {
+                      "type": "number",
+                      "description": "Green channel 0-1"
+                    },
+                    "b": {
+                      "type": "number",
+                      "description": "Blue channel 0-1"
+                    }
+                  },
+                  "required": [
+                    "r",
+                    "g",
+                    "b"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "description": "Opacity 0-1"
+                }
+              },
+              "required": [
+                "type",
+                "color"
+              ]
+            },
+            "description": "Array of paint fills"
+          },
+          "parent": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          }
+        }
+      }
+    },
+    "createShapeWithText": {
+      "type": "createShapeWithText",
+      "category": "core",
+      "description": "Create a shape with text (FigJam).",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "shapeType": {
+            "type": "string",
+            "enum": [
+              "ROUNDED_RECTANGLE",
+              "DIAMOND",
+              "ELLIPSE",
+              "TRIANGLE_UP",
+              "TRIANGLE_DOWN",
+              "PARALLELOGRAM_RIGHT",
+              "PARALLELOGRAM_LEFT"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "fills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "SOLID"
+                  ]
+                },
+                "color": {
+                  "type": "object",
+                  "properties": {
+                    "r": {
+                      "type": "number",
+                      "description": "Red channel 0-1"
+                    },
+                    "g": {
+                      "type": "number",
+                      "description": "Green channel 0-1"
+                    },
+                    "b": {
+                      "type": "number",
+                      "description": "Blue channel 0-1"
+                    }
+                  },
+                  "required": [
+                    "r",
+                    "g",
+                    "b"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "description": "Opacity 0-1"
+                }
+              },
+              "required": [
+                "type",
+                "color"
+              ]
+            },
+            "description": "Array of paint fills"
+          },
+          "parent": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          }
+        }
+      }
+    },
+    "createConnector": {
+      "type": "createConnector",
+      "category": "core",
+      "description": "Create a connector between two nodes (FigJam).",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "startNodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "endNodeId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "startMagnet": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "TOP",
+              "BOTTOM",
+              "LEFT",
+              "RIGHT"
+            ]
+          },
+          "endMagnet": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "TOP",
+              "BOTTOM",
+              "LEFT",
+              "RIGHT"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "strokeWeight": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "startNodeId",
+          "endNodeId"
+        ]
+      }
+    },
+    "createSticky": {
+      "type": "createSticky",
+      "category": "core",
+      "description": "Create a sticky note (FigJam).",
+      "returnsNodeId": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "fills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "SOLID"
+                  ]
+                },
+                "color": {
+                  "type": "object",
+                  "properties": {
+                    "r": {
+                      "type": "number",
+                      "description": "Red channel 0-1"
+                    },
+                    "g": {
+                      "type": "number",
+                      "description": "Green channel 0-1"
+                    },
+                    "b": {
+                      "type": "number",
+                      "description": "Blue channel 0-1"
+                    }
+                  },
+                  "required": [
+                    "r",
+                    "g",
+                    "b"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "description": "Opacity 0-1"
+                }
+              },
+              "required": [
+                "type",
+                "color"
+              ]
+            },
+            "description": "Array of paint fills"
+          },
+          "parent": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          }
+        }
+      }
+    },
+    "measureText": {
+      "type": "measureText",
+      "category": "core",
+      "description": "Measure text dimensions for accurate positioning in FigJam workflows.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "fontSize": {
+            "type": "number"
+          },
+          "fontFamily": {
+            "type": "string"
+          },
+          "fontStyle": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    "setFills": {
+      "type": "setFills",
+      "category": "properties",
+      "description": "Set fills on a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "fills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "SOLID"
+                  ]
+                },
+                "color": {
+                  "type": "object",
+                  "properties": {
+                    "r": {
+                      "type": "number",
+                      "description": "Red channel 0-1"
+                    },
+                    "g": {
+                      "type": "number",
+                      "description": "Green channel 0-1"
+                    },
+                    "b": {
+                      "type": "number",
+                      "description": "Blue channel 0-1"
+                    }
+                  },
+                  "required": [
+                    "r",
+                    "g",
+                    "b"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "description": "Opacity 0-1"
+                }
+              },
+              "required": [
+                "type",
+                "color"
+              ]
+            },
+            "description": "Array of paint fills"
+          }
+        },
+        "required": [
+          "fills"
+        ]
+      }
+    },
+    "setStrokes": {
+      "type": "setStrokes",
+      "category": "properties",
+      "description": "Set strokes on a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "strokes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "SOLID"
+                  ]
+                },
+                "color": {
+                  "type": "object",
+                  "properties": {
+                    "r": {
+                      "type": "number",
+                      "description": "Red channel 0-1"
+                    },
+                    "g": {
+                      "type": "number",
+                      "description": "Green channel 0-1"
+                    },
+                    "b": {
+                      "type": "number",
+                      "description": "Blue channel 0-1"
+                    }
+                  },
+                  "required": [
+                    "r",
+                    "g",
+                    "b"
+                  ]
+                },
+                "opacity": {
+                  "type": "number",
+                  "description": "Opacity 0-1"
+                }
+              },
+              "required": [
+                "type",
+                "color"
+              ]
+            },
+            "description": "Array of paint fills"
+          },
+          "strokeWeight": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "strokes"
+        ]
+      }
+    },
+    "setEffects": {
+      "type": "setEffects",
+      "category": "properties",
+      "description": "Set effects (shadows, blur) on a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "effects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "effects"
+        ]
+      }
+    },
+    "setCornerRadius": {
+      "type": "setCornerRadius",
+      "category": "properties",
+      "description": "Set corner radius on a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "cornerRadius": {
+            "type": "number"
+          },
+          "topLeftRadius": {
+            "type": "number"
+          },
+          "topRightRadius": {
+            "type": "number"
+          },
+          "bottomLeftRadius": {
+            "type": "number"
+          },
+          "bottomRightRadius": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "setOpacity": {
+      "type": "setOpacity",
+      "category": "properties",
+      "description": "Set opacity on a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "opacity": {
+            "type": "number",
+            "description": "0-1"
+          }
+        },
+        "required": [
+          "opacity"
+        ]
+      }
+    },
+    "setVisible": {
+      "type": "setVisible",
+      "category": "properties",
+      "description": "Set visibility of a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "visible"
+        ]
+      }
+    },
+    "loadFont": {
+      "type": "loadFont",
+      "category": "utilities",
+      "description": "Load a font for use in text operations.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "family": {
+            "type": "string",
+            "description": "Font family (e.g., \"Inter\")"
+          },
+          "style": {
+            "type": "string",
+            "description": "Font style (e.g., \"Regular\", \"Bold\")"
+          }
+        },
+        "required": [
+          "family",
+          "style"
+        ]
+      }
+    },
+    "notify": {
+      "type": "notify",
+      "category": "utilities",
+      "description": "Show a notification in Figma.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    },
+    "getNodeColors": {
+      "type": "getNodeColors",
+      "category": "query",
+      "description": "Get all colors used in a node (fills and strokes).",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "getCss": {
+      "type": "getCss",
+      "category": "query",
+      "description": "Get CSS representation of a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    "findAll": {
+      "type": "findAll",
+      "category": "find",
+      "description": "Find all nodes matching criteria within a parent.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "criteria": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Match criteria (type, name, etc.)"
+          }
+        }
+      }
+    },
+    "findText": {
+      "type": "findText",
+      "category": "find",
+      "description": "Find text nodes containing specific text.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Text to search for"
+          },
+          "caseSensitive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    "findAllByType": {
+      "type": "findAllByType",
+      "category": "find",
+      "description": "Find all nodes of a specific type.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "string",
+            "description": "Figma node ID (e.g., \"1:23\")"
+          },
+          "nodeType": {
+            "type": "string",
+            "description": "Node type to find (FRAME, TEXT, RECTANGLE, etc.)"
+          }
+        },
+        "required": [
+          "nodeType"
+        ]
+      }
+    },
+    "deleteChildren": {
+      "type": "deleteChildren",
+      "category": "core",
+      "description": "Delete all children of a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "deleteSelection": {
+      "type": "deleteSelection",
+      "category": "core",
+      "description": "Delete the current selection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "flatten": {
+      "type": "flatten",
+      "category": "core",
+      "description": "Flatten a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "boolean": {
+      "type": "boolean",
+      "category": "core",
+      "description": "Perform a boolean operation on nodes.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createFromSvg": {
+      "type": "createFromSvg",
+      "category": "core",
+      "description": "Create a node from SVG string.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createSlice": {
+      "type": "createSlice",
+      "category": "core",
+      "description": "Create a slice node.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createTable": {
+      "type": "createTable",
+      "category": "core",
+      "description": "Create a table.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setTableCell": {
+      "type": "setTableCell",
+      "category": "core",
+      "description": "Set table cell content.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "styleTableRow": {
+      "type": "styleTableRow",
+      "category": "core",
+      "description": "Style a table row.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "styleTableCell": {
+      "type": "styleTableCell",
+      "category": "core",
+      "description": "Style a table cell.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createCodeBlock": {
+      "type": "createCodeBlock",
+      "category": "core",
+      "description": "Create a code block (FigJam).",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "editVariableCollection": {
+      "type": "editVariableCollection",
+      "category": "variables",
+      "description": "Edit a variable collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "deleteVariableCollection": {
+      "type": "deleteVariableCollection",
+      "category": "variables",
+      "description": "Delete a variable collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "bindVariable": {
+      "type": "bindVariable",
+      "category": "variables",
+      "description": "Bind a variable to a node property.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "inspectFills": {
+      "type": "inspectFills",
+      "category": "variables",
+      "description": "Inspect fills and their variable bindings.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "unbindVariable": {
+      "type": "unbindVariable",
+      "category": "variables",
+      "description": "Unbind a variable from a node.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "exportTokens": {
+      "type": "exportTokens",
+      "category": "variables",
+      "description": "Export design tokens as JSON.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "importTokens": {
+      "type": "importTokens",
+      "category": "variables",
+      "description": "Import design tokens from JSON.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createBoilerplate": {
+      "type": "createBoilerplate",
+      "category": "variables",
+      "description": "Create boilerplate variables.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "replaceColorsByMapping": {
+      "type": "replaceColorsByMapping",
+      "category": "variables",
+      "description": "Replace colors using a mapping.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "rebindVariables": {
+      "type": "rebindVariables",
+      "category": "variables",
+      "description": "Rebind variables after collection changes.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "bindByExtractedUsage": {
+      "type": "bindByExtractedUsage",
+      "category": "variables",
+      "description": "Bind variables based on extracted usage data.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getVariableCollectionById": {
+      "type": "getVariableCollectionById",
+      "category": "variables",
+      "description": "Get a variable collection by ID.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createVariableAlias": {
+      "type": "createVariableAlias",
+      "category": "variables",
+      "description": "Create a variable alias.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createVariableAliasByIdAsync": {
+      "type": "createVariableAliasByIdAsync",
+      "category": "variables",
+      "description": "Create a variable alias by ID (async).",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setBoundVariableForPaint": {
+      "type": "setBoundVariableForPaint",
+      "category": "variables",
+      "description": "Set bound variable for a paint.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setBoundVariableForEffect": {
+      "type": "setBoundVariableForEffect",
+      "category": "variables",
+      "description": "Set bound variable for an effect.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setBoundVariableForLayoutGrid": {
+      "type": "setBoundVariableForLayoutGrid",
+      "category": "variables",
+      "description": "Set bound variable for a layout grid.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setNodeBoundVariable": {
+      "type": "setNodeBoundVariable",
+      "category": "variables",
+      "description": "Set a bound variable on a node.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setVariableCodeSyntax": {
+      "type": "setVariableCodeSyntax",
+      "category": "variables",
+      "description": "Set code syntax for a variable.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setExplicitVariableMode": {
+      "type": "setExplicitVariableMode",
+      "category": "variables",
+      "description": "Set explicit variable mode on a node.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getOrganizingPrinciples": {
+      "type": "getOrganizingPrinciples",
+      "category": "design-system",
+      "description": "Get available organizing principles.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "bindDocumentationVariables": {
+      "type": "bindDocumentationVariables",
+      "category": "design-system",
+      "description": "Bind documentation variables.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createTypographyStyles": {
+      "type": "createTypographyStyles",
+      "category": "design-system",
+      "description": "Create typography styles.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createStateCollection": {
+      "type": "createStateCollection",
+      "category": "design-system",
+      "description": "Create a state variable collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createComponentSizeCollection": {
+      "type": "createComponentSizeCollection",
+      "category": "design-system",
+      "description": "Create component size collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createScreenSizeCollection": {
+      "type": "createScreenSizeCollection",
+      "category": "design-system",
+      "description": "Create screen size collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createTextStyleWithVariables": {
+      "type": "createTextStyleWithVariables",
+      "category": "styles",
+      "description": "Create a text style with variable bindings.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "bindTextStyleVariable": {
+      "type": "bindTextStyleVariable",
+      "category": "styles",
+      "description": "Bind a variable to a text style.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createEffectStyle": {
+      "type": "createEffectStyle",
+      "category": "styles",
+      "description": "Create an effect style.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "editStyle": {
+      "type": "editStyle",
+      "category": "styles",
+      "description": "Edit an existing style.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "deleteStyle": {
+      "type": "deleteStyle",
+      "category": "styles",
+      "description": "Delete a style.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "detachStyle": {
+      "type": "detachStyle",
+      "category": "styles",
+      "description": "Detach a style from a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "applyMatchingTextStyles": {
+      "type": "applyMatchingTextStyles",
+      "category": "styles",
+      "description": "Apply matching text styles to text nodes.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "applyMatchingEffectStyles": {
+      "type": "applyMatchingEffectStyles",
+      "category": "styles",
+      "description": "Apply matching effect styles.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "deleteStyles": {
+      "type": "deleteStyles",
+      "category": "styles",
+      "description": "Delete multiple styles.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "checkStyleConflicts": {
+      "type": "checkStyleConflicts",
+      "category": "styles",
+      "description": "Check for style conflicts.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createGridStyle": {
+      "type": "createGridStyle",
+      "category": "styles",
+      "description": "Create a grid style.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getGridStyles": {
+      "type": "getGridStyles",
+      "category": "styles",
+      "description": "Get all grid styles.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "applyGridStyle": {
+      "type": "applyGridStyle",
+      "category": "styles",
+      "description": "Apply a grid style.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "addVariant": {
+      "type": "addVariant",
+      "category": "components",
+      "description": "Add a variant to a component set.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "editComponentProperties": {
+      "type": "editComponentProperties",
+      "category": "components",
+      "description": "Edit component properties.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setComponentPropertyReferences": {
+      "type": "setComponentPropertyReferences",
+      "category": "components",
+      "description": "Set property references on component children.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getComponentPropertyDefinitions": {
+      "type": "getComponentPropertyDefinitions",
+      "category": "components",
+      "description": "Get component property definitions.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "editInstanceText": {
+      "type": "editInstanceText",
+      "category": "components",
+      "description": "Edit text in an instance.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "overrideInstanceFills": {
+      "type": "overrideInstanceFills",
+      "category": "components",
+      "description": "Override instance fills.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "overrideInstanceStrokes": {
+      "type": "overrideInstanceStrokes",
+      "category": "components",
+      "description": "Override instance strokes.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "overrideInstanceEffects": {
+      "type": "overrideInstanceEffects",
+      "category": "components",
+      "description": "Override instance effects.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "resetOverrides": {
+      "type": "resetOverrides",
+      "category": "components",
+      "description": "Reset instance overrides.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "swapInstance": {
+      "type": "swapInstance",
+      "category": "components",
+      "description": "Swap an instance to a different component.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "detachInstance": {
+      "type": "detachInstance",
+      "category": "components",
+      "description": "Detach an instance from its component.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "analyzeColors": {
+      "type": "analyzeColors",
+      "category": "query",
+      "description": "Analyze color usage in a frame.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "deletePage": {
+      "type": "deletePage",
+      "category": "pages",
+      "description": "Delete a page.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "renamePage": {
+      "type": "renamePage",
+      "category": "pages",
+      "description": "Rename a page.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "duplicatePage": {
+      "type": "duplicatePage",
+      "category": "pages",
+      "description": "Duplicate a page.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "loadAllPages": {
+      "type": "loadAllPages",
+      "category": "pages",
+      "description": "Load all pages.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "listFonts": {
+      "type": "listFonts",
+      "category": "utilities",
+      "description": "List available fonts.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "checkMissingFonts": {
+      "type": "checkMissingFonts",
+      "category": "utilities",
+      "description": "Check for missing fonts.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getUsedFonts": {
+      "type": "getUsedFonts",
+      "category": "utilities",
+      "description": "Get fonts used in the file.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createImageFromUrl": {
+      "type": "createImageFromUrl",
+      "category": "images",
+      "description": "Create an image from a URL.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getImageData": {
+      "type": "getImageData",
+      "category": "images",
+      "description": "Get image data (base64).",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "replaceImage": {
+      "type": "replaceImage",
+      "category": "images",
+      "description": "Replace an image.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "batchExport": {
+      "type": "batchExport",
+      "category": "export",
+      "description": "Export multiple nodes.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getExportSettings": {
+      "type": "getExportSettings",
+      "category": "export",
+      "description": "Get export settings.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setExportSettings": {
+      "type": "setExportSettings",
+      "category": "export",
+      "description": "Set export settings.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "commitUndo": {
+      "type": "commitUndo",
+      "category": "utilities",
+      "description": "Commit undo history.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "triggerUndo": {
+      "type": "triggerUndo",
+      "category": "utilities",
+      "description": "Trigger undo.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "saveVersion": {
+      "type": "saveVersion",
+      "category": "utilities",
+      "description": "Save a named version.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getCurrentUser": {
+      "type": "getCurrentUser",
+      "category": "utilities",
+      "description": "Get current user info.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getActiveUsers": {
+      "type": "getActiveUsers",
+      "category": "utilities",
+      "description": "Get active users in the file.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getFileInfo": {
+      "type": "getFileInfo",
+      "category": "utilities",
+      "description": "Get file information.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "openExternal": {
+      "type": "openExternal",
+      "category": "utilities",
+      "description": "Open an external URL.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getFileThumbnail": {
+      "type": "getFileThumbnail",
+      "category": "utilities",
+      "description": "Get file thumbnail.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setFileThumbnail": {
+      "type": "setFileThumbnail",
+      "category": "utilities",
+      "description": "Set file thumbnail.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "base64Encode": {
+      "type": "base64Encode",
+      "category": "utilities",
+      "description": "Base64 encode data.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "base64Decode": {
+      "type": "base64Decode",
+      "category": "utilities",
+      "description": "Base64 decode data.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getAutoLayout": {
+      "type": "getAutoLayout",
+      "category": "layout",
+      "description": "Get auto-layout settings.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setLayoutChild": {
+      "type": "setLayoutChild",
+      "category": "layout",
+      "description": "Set layout child properties.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getConstraints": {
+      "type": "getConstraints",
+      "category": "layout",
+      "description": "Get constraints.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setSizeConstraints": {
+      "type": "setSizeConstraints",
+      "category": "layout",
+      "description": "Set min/max size constraints.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "inferAutoLayout": {
+      "type": "inferAutoLayout",
+      "category": "layout",
+      "description": "Infer auto-layout from node structure.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeFont": {
+      "type": "setRangeFont",
+      "category": "text",
+      "description": "Set font for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeFontSize": {
+      "type": "setRangeFontSize",
+      "category": "text",
+      "description": "Set font size for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeColor": {
+      "type": "setRangeColor",
+      "category": "text",
+      "description": "Set color for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeTextDecoration": {
+      "type": "setRangeTextDecoration",
+      "category": "text",
+      "description": "Set text decoration (underline, strikethrough).",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeTextCase": {
+      "type": "setRangeTextCase",
+      "category": "text",
+      "description": "Set text case (upper, lower, title).",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeLineHeight": {
+      "type": "setRangeLineHeight",
+      "category": "text",
+      "description": "Set line height for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeLetterSpacing": {
+      "type": "setRangeLetterSpacing",
+      "category": "text",
+      "description": "Set letter spacing for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "insertText": {
+      "type": "insertText",
+      "category": "text",
+      "description": "Insert text at a position.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "deleteText": {
+      "type": "deleteText",
+      "category": "text",
+      "description": "Delete text at a range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeStyles": {
+      "type": "getRangeStyles",
+      "category": "text",
+      "description": "Get styles for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setTextHyperlink": {
+      "type": "setTextHyperlink",
+      "category": "text",
+      "description": "Set a hyperlink on text.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeFontWeight": {
+      "type": "getRangeFontWeight",
+      "category": "text",
+      "description": "Get font weight for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeAllFontNames": {
+      "type": "getRangeAllFontNames",
+      "category": "text",
+      "description": "Get all font names in a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeFills": {
+      "type": "getRangeFills",
+      "category": "text",
+      "description": "Get fills for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeFills": {
+      "type": "setRangeFills",
+      "category": "text",
+      "description": "Set fills for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeTextStyleId": {
+      "type": "getRangeTextStyleId",
+      "category": "text",
+      "description": "Get text style ID for a range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeTextStyleIdAsync": {
+      "type": "setRangeTextStyleIdAsync",
+      "category": "text",
+      "description": "Set text style ID for a range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeListOptions": {
+      "type": "getRangeListOptions",
+      "category": "text",
+      "description": "Get list options for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeListOptions": {
+      "type": "setRangeListOptions",
+      "category": "text",
+      "description": "Set list options for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeIndentation": {
+      "type": "getRangeIndentation",
+      "category": "text",
+      "description": "Get indentation for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeIndentation": {
+      "type": "setRangeIndentation",
+      "category": "text",
+      "description": "Set indentation for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeParagraphSpacing": {
+      "type": "getRangeParagraphSpacing",
+      "category": "text",
+      "description": "Get paragraph spacing.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeParagraphSpacing": {
+      "type": "setRangeParagraphSpacing",
+      "category": "text",
+      "description": "Set paragraph spacing.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeParagraphIndent": {
+      "type": "getRangeParagraphIndent",
+      "category": "text",
+      "description": "Get paragraph indent.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeParagraphIndent": {
+      "type": "setRangeParagraphIndent",
+      "category": "text",
+      "description": "Set paragraph indent.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRangeFontName": {
+      "type": "getRangeFontName",
+      "category": "text",
+      "description": "Get font name for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRangeFontName": {
+      "type": "setRangeFontName",
+      "category": "text",
+      "description": "Set font name for a text range.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setBlendMode": {
+      "type": "setBlendMode",
+      "category": "properties",
+      "description": "Set blend mode.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setLocked": {
+      "type": "setLocked",
+      "category": "properties",
+      "description": "Set locked state.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setClipsContent": {
+      "type": "setClipsContent",
+      "category": "properties",
+      "description": "Set clips content.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setMask": {
+      "type": "setMask",
+      "category": "properties",
+      "description": "Set as mask.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRotation": {
+      "type": "setRotation",
+      "category": "properties",
+      "description": "Set rotation angle.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setPluginData": {
+      "type": "setPluginData",
+      "category": "properties",
+      "description": "Set plugin data on a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getPluginData": {
+      "type": "getPluginData",
+      "category": "properties",
+      "description": "Get plugin data from a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "importComponentByKey": {
+      "type": "importComponentByKey",
+      "category": "import",
+      "description": "Import a component by key from a library.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "importComponentSetByKey": {
+      "type": "importComponentSetByKey",
+      "category": "import",
+      "description": "Import a component set by key.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "importStyleByKey": {
+      "type": "importStyleByKey",
+      "category": "import",
+      "description": "Import a style by key.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "importVariableByKey": {
+      "type": "importVariableByKey",
+      "category": "import",
+      "description": "Import a variable by key.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getLibraryVariableCollections": {
+      "type": "getLibraryVariableCollections",
+      "category": "import",
+      "description": "Get library variable collections.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getVariablesInLibraryCollection": {
+      "type": "getVariablesInLibraryCollection",
+      "category": "import",
+      "description": "Get variables in a library collection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "findChildren": {
+      "type": "findChildren",
+      "category": "find",
+      "description": "Find children matching criteria.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "findChild": {
+      "type": "findChild",
+      "category": "find",
+      "description": "Find first child matching criteria.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "findOne": {
+      "type": "findOne",
+      "category": "find",
+      "description": "Find one node matching criteria.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "findWidgetNodesByWidgetId": {
+      "type": "findWidgetNodesByWidgetId",
+      "category": "find",
+      "description": "Find widget nodes by widget ID.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createVideo": {
+      "type": "createVideo",
+      "category": "media",
+      "description": "Create a video node.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createImageAsync": {
+      "type": "createImageAsync",
+      "category": "media",
+      "description": "Create an image asynchronously.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createLinkPreview": {
+      "type": "createLinkPreview",
+      "category": "media",
+      "description": "Create a link preview.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createGif": {
+      "type": "createGif",
+      "category": "media",
+      "description": "Create a GIF node.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createPageDivider": {
+      "type": "createPageDivider",
+      "category": "media",
+      "description": "Create a page divider.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createSlide": {
+      "type": "createSlide",
+      "category": "media",
+      "description": "Create a slide.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createSlideRow": {
+      "type": "createSlideRow",
+      "category": "media",
+      "description": "Create a slide row.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getSlideGrid": {
+      "type": "getSlideGrid",
+      "category": "media",
+      "description": "Get slide grid structure.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "createCanvasRow": {
+      "type": "createCanvasRow",
+      "category": "media",
+      "description": "Create a canvas row.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getCanvasGrid": {
+      "type": "getCanvasGrid",
+      "category": "media",
+      "description": "Get canvas grid structure.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getSelectionColors": {
+      "type": "getSelectionColors",
+      "category": "query",
+      "description": "Get colors from selection.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getPublishStatus": {
+      "type": "getPublishStatus",
+      "category": "query",
+      "description": "Get publish status.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getTopLevelFrame": {
+      "type": "getTopLevelFrame",
+      "category": "query",
+      "description": "Get the top-level frame for a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getMeasurements": {
+      "type": "getMeasurements",
+      "category": "query",
+      "description": "Get measurements.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getMeasurementsForNode": {
+      "type": "getMeasurementsForNode",
+      "category": "query",
+      "description": "Get measurements for a node.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getAnnotationCategories": {
+      "type": "getAnnotationCategories",
+      "category": "query",
+      "description": "Get annotation categories.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getAnnotationCategoryById": {
+      "type": "getAnnotationCategoryById",
+      "category": "query",
+      "description": "Get annotation category by ID.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getComponentInstances": {
+      "type": "getComponentInstances",
+      "category": "query",
+      "description": "Get instances of a component.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getMainComponent": {
+      "type": "getMainComponent",
+      "category": "query",
+      "description": "Get main component of an instance.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getStyleConsumers": {
+      "type": "getStyleConsumers",
+      "category": "query",
+      "description": "Get style consumers.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getDevResources": {
+      "type": "getDevResources",
+      "category": "dev-resources",
+      "description": "Get dev resources.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setDevResourcePreview": {
+      "type": "setDevResourcePreview",
+      "category": "dev-resources",
+      "description": "Set dev resource preview.",
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getSharedPluginData": {
+      "type": "getSharedPluginData",
+      "category": "dev-resources",
+      "description": "Get shared plugin data.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setSharedPluginData": {
+      "type": "setSharedPluginData",
+      "category": "dev-resources",
+      "description": "Set shared plugin data.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getSharedPluginDataKeys": {
+      "type": "getSharedPluginDataKeys",
+      "category": "dev-resources",
+      "description": "Get shared plugin data keys.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setRelaunchData": {
+      "type": "setRelaunchData",
+      "category": "dev-resources",
+      "description": "Set relaunch data.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "getRelaunchData": {
+      "type": "getRelaunchData",
+      "category": "dev-resources",
+      "description": "Get relaunch data.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setFillStyleIdAsync": {
+      "type": "setFillStyleIdAsync",
+      "category": "dev-resources",
+      "description": "Set fill style ID.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setStrokeStyleIdAsync": {
+      "type": "setStrokeStyleIdAsync",
+      "category": "dev-resources",
+      "description": "Set stroke style ID.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setEffectStyleIdAsync": {
+      "type": "setEffectStyleIdAsync",
+      "category": "dev-resources",
+      "description": "Set effect style ID.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setGridStyleIdAsync": {
+      "type": "setGridStyleIdAsync",
+      "category": "dev-resources",
+      "description": "Set grid style ID.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setTextStyleIdAsync": {
+      "type": "setTextStyleIdAsync",
+      "category": "dev-resources",
+      "description": "Set text style ID.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setReactions": {
+      "type": "setReactions",
+      "category": "dev-resources",
+      "description": "Set prototype reactions.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setInstanceProperties": {
+      "type": "setInstanceProperties",
+      "category": "dev-resources",
+      "description": "Set instance properties.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    },
+    "setVectorNetwork": {
+      "type": "setVectorNetwork",
+      "category": "dev-resources",
+      "description": "Set vector network.",
+      "requiresTarget": true,
+      "payloadSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": true
+      }
+    }
+  }
+}

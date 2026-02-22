@@ -2,3 +2,4 @@ packages:
   - 'bridge-server'
   - 'figma-plugin'
   - 'shared'
+  - 'orchestrator'

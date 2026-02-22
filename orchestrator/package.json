@@ -1,0 +1,36 @@
+{
+  "name": "@figma-claude-bridge/orchestrator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "generate-schema": "tsx scripts/generate-schema.ts"
+  },
+  "dependencies": {
+    "yaml": "^2.4.0",
+    "zod": "^3.22.0"
+  },
+  "peerDependencies": {
+    "@google/adk": ">=0.1.0",
+    "openai": ">=4.0.0",
+    "@anthropic-ai/sdk": ">=0.20.0"
+  },
+  "peerDependenciesMeta": {
+    "@google/adk": { "optional": true },
+    "openai": { "optional": true },
+    "@anthropic-ai/sdk": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
