@@ -3,7 +3,6 @@ let commandCount = 0;
 let errorCount = 0;
 let currentCommandId: string | null = null;
 let currentCommandStartTime: number | null = null;
-let elapsedIntervalId: number | null = null;
 let showErrorsOnly = false;
 
 // DOM elements
@@ -15,7 +14,6 @@ const logEl = document.getElementById('log') as HTMLElement;
 const currentCommandEl = document.getElementById('currentCommand') as HTMLElement;
 const currentCommandTitleEl = document.getElementById('currentCommandTitle') as HTMLElement;
 const currentCommandTypeEl = document.getElementById('currentCommandType') as HTMLElement;
-const currentCommandElapsedEl = document.getElementById('currentCommandElapsed') as HTMLElement;
 const pendingCloseNoticeEl = document.getElementById('pendingCloseNotice') as HTMLElement;
 const errorStatEl = document.getElementById('errorStat') as HTMLElement;
 
@@ -32,11 +30,6 @@ function addLog(message: string, type: 'info' | 'success' | 'error' = 'info'): v
   const entry = document.createElement('div');
   entry.className = `log-entry ${type}`;
   entry.innerHTML = `<span class="log-time">${formatTime()}</span>${message}`;
-
-  // Keep only last 50 entries
-  while (logEl.children.length > 50) {
-    logEl.removeChild(logEl.firstChild!);
-  }
 
   logEl.appendChild(entry);
   logEl.scrollTop = logEl.scrollHeight;
@@ -57,52 +50,31 @@ function updateStats(): void {
   errorCountEl.textContent = errorCount.toString();
 }
 
-function formatElapsed(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}m ${remainingSeconds}s`;
-}
-
 function showCurrentCommand(commandType: string, commandId: string): void {
   currentCommandId = commandId;
   currentCommandStartTime = Date.now();
   currentCommandTitleEl.textContent = 'Running Command...';
   currentCommandTypeEl.textContent = commandType;
-  currentCommandElapsedEl.textContent = '';
   currentCommandEl.classList.add('active');
 }
 
 function hideCurrentCommand(showDuration: boolean = false): void {
-  // Show final elapsed time before hiding
   if (showDuration && currentCommandStartTime !== null) {
-    const elapsed = Date.now() - currentCommandStartTime;
     currentCommandTitleEl.textContent = 'Completed';
-    currentCommandElapsedEl.textContent = formatElapsed(elapsed);
-    // Keep visible briefly to show duration
+    // Keep visible briefly then reset
     setTimeout(() => {
       currentCommandEl.classList.remove('active');
       currentCommandTitleEl.textContent = 'Ready';
       currentCommandTypeEl.textContent = 'Waiting for commands...';
-      currentCommandElapsedEl.textContent = '';
     }, 2000);
   } else {
     currentCommandEl.classList.remove('active');
     currentCommandTitleEl.textContent = 'Ready';
     currentCommandTypeEl.textContent = 'Waiting for commands...';
-    currentCommandElapsedEl.textContent = '';
   }
 
   currentCommandId = null;
   currentCommandStartTime = null;
-
-  if (elapsedIntervalId !== null) {
-    clearInterval(elapsedIntervalId);
-    elapsedIntervalId = null;
-  }
 }
 
 // Handle messages from the main plugin code

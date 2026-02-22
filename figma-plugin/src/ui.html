@@ -8,12 +8,18 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      height: 100%;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 12px;
       padding: 12px;
-      background: #fff;
-      color: #333;
+      background: var(--figma-color-bg, #fff);
+      color: var(--figma-color-text, #333);
+      display: flex;
+      flex-direction: column;
     }
 
     .header {
@@ -22,26 +28,26 @@
       gap: 8px;
       margin-bottom: 12px;
       padding-bottom: 12px;
-      border-bottom: 1px solid #e5e5e5;
+      border-bottom: 1px solid var(--figma-color-border, #e5e5e5);
     }
 
     .status-indicator {
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: #ccc;
+      background: var(--figma-color-icon-tertiary, #ccc);
     }
 
     .status-indicator.connected {
-      background: #22c55e;
+      background: var(--figma-color-bg-success, #22c55e);
     }
 
     .status-indicator.disconnected {
-      background: #ef4444;
+      background: var(--figma-color-bg-danger, #ef4444);
     }
 
     .status-indicator.connecting {
-      background: #f59e0b;
+      background: var(--figma-color-bg-warning, #f59e0b);
       animation: pulse 1s infinite;
     }
 
@@ -57,28 +63,26 @@
     }
 
     .status-text {
-      color: #666;
+      color: var(--figma-color-text-secondary, #666);
       font-size: 11px;
     }
 
     .stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
       gap: 8px;
       margin-bottom: 12px;
+      align-items: center;
     }
 
     .stat {
-      background: #f5f5f5;
-      padding: 8px;
-      border-radius: 6px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
     }
 
     .stat-label {
-      color: #666;
-      font-size: 10px;
-      text-transform: uppercase;
-      margin-bottom: 2px;
+      color: var(--figma-color-text-secondary, #666);
+      font-size: 11px;
     }
 
     .stat-value {
@@ -86,11 +90,37 @@
       font-weight: 600;
     }
 
+    .error-toggle {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--figma-color-border, #e5e5e5);
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .error-toggle:hover {
+      background: var(--figma-color-bg-secondary, #f5f5f5);
+    }
+
+    .error-toggle.filter-active {
+      background: rgba(56, 132, 255, 0.08);
+      border-color: rgba(56, 132, 255, 0.5);
+    }
+
+    .error-toggle.filter-active:hover {
+      background: rgba(56, 132, 255, 0.14);
+    }
+
     .log {
-      background: #f9f9f9;
+      background: var(--figma-color-bg-secondary, #f9f9f9);
       border-radius: 6px;
       padding: 8px;
-      max-height: 120px;
+      flex: 1;
+      min-height: 80px;
       overflow-y: auto;
       font-family: 'SF Mono', Monaco, Consolas, monospace;
       font-size: 10px;
@@ -99,7 +129,7 @@
 
     .log-entry {
       padding: 2px 0;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--figma-color-border, #eee);
     }
 
     .log-entry:last-child {
@@ -107,31 +137,11 @@
     }
 
     .log-entry.error {
-      color: #ef4444;
+      color: var(--figma-color-text-danger, #ef4444);
     }
 
     .log-entry.success {
-      color: #22c55e;
-    }
-
-    .stat.clickable {
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-      border: 1px solid transparent;
-      user-select: none;
-    }
-
-    .stat.clickable:hover {
-      background: #eee;
-    }
-
-    .stat.filter-active {
-      background: #fef2f2;
-      border-color: #ef4444;
-    }
-
-    .stat.filter-active:hover {
-      background: #fee2e2;
+      color: var(--figma-color-text-success, #22c55e);
     }
 
     .log.errors-only .log-entry:not(.error) {
@@ -139,13 +149,13 @@
     }
 
     .log-time {
-      color: #999;
+      color: var(--figma-color-text-tertiary, #999);
       margin-right: 6px;
     }
 
     .current-command {
-      background: #f5f5f5;
-      border: 1px solid #e5e5e5;
+      background: var(--figma-color-bg-secondary, #f5f5f5);
+      border: 1px solid var(--figma-color-border, #e5e5e5);
       border-radius: 6px;
       padding: 10px;
       margin-bottom: 12px;
@@ -154,8 +164,8 @@
 
     .current-command.active {
       display: block;
-      background: #fef3c7;
-      border-color: #f59e0b;
+      background: var(--figma-color-bg-warning, #fef3c7);
+      border-color: var(--figma-color-border-warning-strong, #f59e0b);
     }
 
     .current-command-header {
@@ -168,7 +178,7 @@
     .spinner {
       width: 14px;
       height: 14px;
-      border: 2px solid #f59e0b;
+      border: 2px solid var(--figma-color-border-warning-strong, #f59e0b);
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -186,22 +196,22 @@
     .current-command-title {
       font-weight: 600;
       font-size: 11px;
-      color: #666;
+      color: var(--figma-color-text-secondary, #666);
     }
 
     .current-command.active .current-command-title {
-      color: #92400e;
+      color: var(--figma-color-text-warning, #92400e);
     }
 
     .current-command-details {
       display: flex;
       justify-content: space-between;
       font-size: 11px;
-      color: #666;
+      color: var(--figma-color-text-secondary, #666);
     }
 
     .current-command.active .current-command-details {
-      color: #78350f;
+      color: var(--figma-color-text-warning, #78350f);
     }
 
     .current-command-type {
@@ -209,18 +219,14 @@
       font-weight: 500;
     }
 
-    .current-command-elapsed {
-      font-variant-numeric: tabular-nums;
-    }
-
     .pending-close-notice {
-      background: #fef2f2;
-      border: 1px solid #ef4444;
+      background: var(--figma-color-bg-danger, #fef2f2);
+      border: 1px solid var(--figma-color-border-danger, #ef4444);
       border-radius: 6px;
       padding: 8px;
       margin-bottom: 12px;
       font-size: 11px;
-      color: #b91c1c;
+      color: var(--figma-color-text-danger, #b91c1c);
       display: none;
     }
 
@@ -245,7 +251,7 @@
       <div class="stat-label">Commands</div>
       <div id="commandCount" class="stat-value">0</div>
     </div>
-    <div id="errorStat" class="stat clickable" title="Click to filter log to errors only">
+    <div id="errorStat" class="error-toggle" title="Toggle: show errors only">
       <div class="stat-label">Errors</div>
       <div id="errorCount" class="stat-value">0</div>
     </div>
@@ -258,7 +264,6 @@
     </div>
     <div class="current-command-details">
       <span id="currentCommandType" class="current-command-type">Waiting for commands...</span>
-      <span id="currentCommandElapsed" class="current-command-elapsed"></span>
     </div>
   </div>
 

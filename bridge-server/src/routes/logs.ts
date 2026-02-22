@@ -25,8 +25,8 @@ router.post('/', (req: Request, res: Response) => {
 // GET /logs - Get recent logs (called by Claude Code)
 router.get('/', (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 150;
-    const logs = queue.getLogs(limit);
+    const limitParam = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    const logs = queue.getLogs(limitParam);
 
     res.json({
       count: logs.length,

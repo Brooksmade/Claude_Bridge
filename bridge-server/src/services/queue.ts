@@ -209,10 +209,6 @@ export const queue = {
       type,
     };
     pluginLogs.push(entry);
-    // Keep last 600 command logs
-    while (pluginLogs.length > 600) {
-      pluginLogs.shift();
-    }
     // Errors are stored separately and never trimmed
     if (type === 'error') {
       errorLogs.push(entry);
@@ -231,9 +227,12 @@ export const queue = {
     }
   },
 
-  // Get recent logs
-  getLogs(limit: number = 150): LogEntry[] {
-    return pluginLogs.slice(-limit);
+  // Get all logs (or last N if limit specified)
+  getLogs(limit?: number): LogEntry[] {
+    if (limit) {
+      return pluginLogs.slice(-limit);
+    }
+    return pluginLogs.slice();
   },
 
   // Get all errors (persisted until cleared)
