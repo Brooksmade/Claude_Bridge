@@ -5,6 +5,7 @@ import { queue } from '../services/queue.js';
 import { broadcast } from '../services/websocket.js';
 import { extractWebsiteCSS } from '../services/websiteExtractor.js';
 import { extractWebsiteLayout } from '../services/websiteLayoutExtractor.js';
+import { PROTOCOL_VERSION } from '@bridge-to-fig/shared';
 
 const router: RouterType = Router();
 
@@ -159,6 +160,11 @@ router.get('/', (_req: Request, res: Response) => {
 // This holds the connection open until a command arrives or timeout
 router.get('/poll', async (req: Request, res: Response) => {
   try {
+    const pluginProtocol = req.headers['x-plugin-protocol'] as string | undefined;
+    if (pluginProtocol && parseInt(pluginProtocol, 10) < PROTOCOL_VERSION) {
+      console.log(`[Commands] Plugin protocol v${pluginProtocol} < server v${PROTOCOL_VERSION}`);
+    }
+
     const timeout = parseInt(req.query.timeout as string) || 30000;
     const commands = await queue.waitForCommands(Math.min(timeout, 55000));
     res.json({ commands });

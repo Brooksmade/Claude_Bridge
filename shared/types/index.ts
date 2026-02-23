@@ -251,3 +251,5 @@ export type {
   LayoutExtractionOptions,
   LayoutExtractionResult,
 } from './layout.js';
+
+export { PROTOCOL_VERSION, MIN_PROTOCOL_VERSION, APP_VERSION } from './version.js';

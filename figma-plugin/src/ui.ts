@@ -10,12 +10,16 @@ const statusIndicator = document.getElementById('statusIndicator') as HTMLElemen
 const statusText = document.getElementById('statusText') as HTMLElement;
 const commandCountEl = document.getElementById('commandCount') as HTMLElement;
 const errorCountEl = document.getElementById('errorCount') as HTMLElement;
-const logEl = document.getElementById('log') as HTMLElement;
+const logEntriesEl = document.getElementById('logEntries') as HTMLElement;
 const currentCommandEl = document.getElementById('currentCommand') as HTMLElement;
 const currentCommandTitleEl = document.getElementById('currentCommandTitle') as HTMLElement;
 const currentCommandTypeEl = document.getElementById('currentCommandType') as HTMLElement;
 const pendingCloseNoticeEl = document.getElementById('pendingCloseNotice') as HTMLElement;
 const errorStatEl = document.getElementById('errorStat') as HTMLElement;
+const versionBannerEl = document.getElementById('versionBanner') as HTMLElement;
+const versionBannerMessageEl = document.getElementById('versionBannerMessage') as HTMLElement;
+const versionBannerDismissEl = document.getElementById('versionBannerDismiss') as HTMLElement;
+const downloadBtnEl = document.getElementById('downloadBtn') as HTMLElement;
 
 function formatTime(): string {
   return new Date().toLocaleTimeString('en-US', {
@@ -28,20 +32,24 @@ function formatTime(): string {
 
 function addLog(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
   const entry = document.createElement('div');
-  entry.className = `log-entry ${type}`;
+  // Detect "Executing:" messages and style them as 'executing'
+  const cssType = (type === 'info' && message.startsWith('Executing:')) ? 'executing' : type;
+  entry.className = `log-entry ${cssType}`;
   entry.innerHTML = `<span class="log-time">${formatTime()}</span>${message}`;
 
-  logEl.appendChild(entry);
-  logEl.scrollTop = logEl.scrollHeight;
+  logEntriesEl.appendChild(entry);
+  logEntriesEl.scrollTop = logEntriesEl.scrollHeight;
 }
 
 function updateStatus(connected: boolean): void {
   if (connected) {
     statusIndicator.className = 'status-indicator connected';
     statusText.textContent = 'Connected';
+    downloadBtnEl.style.display = 'none';
   } else {
     statusIndicator.className = 'status-indicator disconnected';
     statusText.textContent = 'Disconnected';
+    downloadBtnEl.style.display = '';
   }
 }
 
@@ -53,7 +61,7 @@ function updateStats(): void {
 function showCurrentCommand(commandType: string, commandId: string): void {
   currentCommandId = commandId;
   currentCommandStartTime = Date.now();
-  currentCommandTitleEl.textContent = 'Running Command...';
+  currentCommandTitleEl.textContent = 'Running';
   currentCommandTypeEl.textContent = commandType;
   currentCommandEl.classList.add('active');
 }
@@ -113,18 +121,36 @@ window.onmessage = (event) => {
       addLog(message.message, message.logType || 'info');
       break;
 
+    case 'versionBanner':
+      versionBannerEl.className = `version-banner visible ${message.level || 'info'}`;
+      versionBannerEl.style.display = '';
+      versionBannerMessageEl.textContent = message.message || '';
+      versionBannerDismissEl.style.display = message.dismissible ? '' : 'none';
+      break;
+
     case 'pendingClose':
       pendingCloseNoticeEl.classList.add('visible');
       break;
   }
 };
 
+// Version banner dismiss
+versionBannerDismissEl.addEventListener('click', () => {
+  versionBannerEl.style.display = 'none';
+  versionBannerEl.classList.remove('visible');
+});
+
+// Download button — open GitHub releases page
+downloadBtnEl.addEventListener('click', () => {
+  parent.postMessage({ pluginMessage: { type: 'openExternal', url: 'https://github.com/Brooksmade/Claude_Bridge/releases' } }, '*');
+});
+
 // Error filter toggle
 errorStatEl.addEventListener('click', () => {
   showErrorsOnly = !showErrorsOnly;
-  logEl.classList.toggle('errors-only', showErrorsOnly);
+  logEntriesEl.classList.toggle('errors-only', showErrorsOnly);
   errorStatEl.classList.toggle('filter-active', showErrorsOnly);
-  logEl.scrollTop = logEl.scrollHeight;
+  logEntriesEl.scrollTop = logEntriesEl.scrollHeight;
 });
 
 // Initial state

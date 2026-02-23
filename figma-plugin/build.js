@@ -56,9 +56,19 @@ async function buildUI() {
   fs.writeFileSync('dist/ui.html', htmlDist);
 }
 
-// Copy manifest
+// Copy manifest with version injected into name, and icon
 function copyManifest() {
-  fs.copyFileSync('manifest.json', 'dist/manifest.json');
+  // Read APP_VERSION from version.ts
+  const versionSrc = fs.readFileSync('src/version.ts', 'utf-8');
+  const match = versionSrc.match(/APP_VERSION\s*=\s*'([^']+)'/);
+  const version = match ? match[1] : null;
+
+  const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf-8'));
+  if (version) {
+    manifest.name = `Bridge to Fig v${version}`;
+  }
+  fs.writeFileSync('dist/manifest.json', JSON.stringify(manifest, null, 2));
+  fs.copyFileSync('src/icon.svg', 'dist/icon.svg');
 }
 
 // Ensure dist directory exists

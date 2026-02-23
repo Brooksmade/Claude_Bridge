@@ -400,6 +400,15 @@ export function serializeNode(node: SceneNode, includeChildren = false): object 
     base.fills = (node as GeometryMixin).fills;
   }
 
+  if ('effects' in node) {
+    base.effects = (node as any).effects;
+  }
+
+  if ('strokes' in node) {
+    base.strokes = (node as GeometryMixin).strokes;
+    if ('strokeWeight' in node) base.strokeWeight = (node as any).strokeWeight;
+  }
+
   if ('cornerRadius' in node) {
     const rectLike = node as RectangleNode;
     if (typeof rectLike.cornerRadius === 'number') {

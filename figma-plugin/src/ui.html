@@ -16,19 +16,24 @@
       font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 12px;
       padding: 12px;
+      gap: 12px;
       background: var(--figma-color-bg, #fff);
       color: var(--figma-color-text, #333);
       display: flex;
       flex-direction: column;
     }
 
+    /* ── Header ── */
     .header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--figma-color-border, #e5e5e5);
+      gap: 4px;
+    }
+
+    .status-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .status-indicator {
@@ -36,10 +41,11 @@
       height: 10px;
       border-radius: 50%;
       background: var(--figma-color-icon-tertiary, #ccc);
+      flex-shrink: 0;
     }
 
     .status-indicator.connected {
-      background: var(--figma-color-bg-success, #22c55e);
+      background: #21c55e;
     }
 
     .status-indicator.disconnected {
@@ -56,27 +62,45 @@
       50% { opacity: 0.5; }
     }
 
-    .title {
-      font-weight: 600;
-      font-size: 13px;
-      flex: 1;
-    }
-
     .status-text {
       color: var(--figma-color-text-secondary, #666);
       font-size: 11px;
     }
 
+    .download-btn {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--figma-color-border, #e5e5e5);
+      cursor: pointer;
+      color: #999;
+      font-family: inherit;
+      font-size: 11px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .download-btn:hover {
+      background: var(--figma-color-bg-tertiary, rgba(0, 0, 0, 0.06));
+    }
+
+    /* ── Separator ── */
+    .separator {
+      height: 1px;
+      background: var(--figma-color-border, #e5e5e5);
+    }
+
+    /* ── Stats ── */
     .stats {
       display: flex;
       gap: 8px;
-      margin-bottom: 12px;
       align-items: center;
     }
 
     .stat {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 6px;
     }
 
@@ -94,16 +118,22 @@
       cursor: pointer;
       user-select: none;
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 6px;
-      padding: 4px 10px;
-      border-radius: 6px;
+      height: 30px;
+      padding: 0 10px;
       border: 1px solid var(--figma-color-border, #e5e5e5);
+      border-radius: 6px;
+      margin-left: auto;
       transition: background 0.15s, border-color 0.15s;
     }
 
+    .error-toggle .stat-label {
+      color: #999;
+    }
+
     .error-toggle:hover {
-      background: var(--figma-color-bg-secondary, #f5f5f5);
+      background: var(--figma-color-bg-tertiary, rgba(0, 0, 0, 0.06));
     }
 
     .error-toggle.filter-active {
@@ -115,70 +145,53 @@
       background: rgba(56, 132, 255, 0.14);
     }
 
+    /* ── Log container (holds command box + scrollable entries) ── */
     .log {
-      background: var(--figma-color-bg-secondary, #f9f9f9);
+      background: #f4f4f4;
       border-radius: 6px;
       padding: 8px;
       flex: 1;
-      min-height: 80px;
-      overflow-y: auto;
-      font-family: 'SF Mono', Monaco, Consolas, monospace;
-      font-size: 10px;
-      line-height: 1.5;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: inset 0 8px 8px -4px rgba(0,0,0,0.1), inset 0 20px 24px -4px rgba(0,0,0,0.1);
     }
 
-    .log-entry {
-      padding: 2px 0;
-      border-bottom: 1px solid var(--figma-color-border, #eee);
+    html.figma-dark .log {
+      background: #262626;
     }
 
-    .log-entry:last-child {
-      border-bottom: none;
-    }
-
-    .log-entry.error {
-      color: var(--figma-color-text-danger, #ef4444);
-    }
-
-    .log-entry.success {
-      color: var(--figma-color-text-success, #22c55e);
-    }
-
-    .log.errors-only .log-entry:not(.error) {
-      display: none;
-    }
-
-    .log-time {
-      color: var(--figma-color-text-tertiary, #999);
-      margin-right: 6px;
-    }
-
+    /* ── Command box (inside log) ── */
     .current-command {
-      background: var(--figma-color-bg-secondary, #f5f5f5);
-      border: 1px solid var(--figma-color-border, #e5e5e5);
+      background: var(--figma-color-bg, #fff);
       border-radius: 6px;
       padding: 10px;
-      margin-bottom: 12px;
-      display: block;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      box-shadow: 0 8px 8px -4px rgba(0,0,0,0.1), 0 20px 24px -4px rgba(0,0,0,0.1);
     }
 
     .current-command.active {
-      display: block;
-      background: var(--figma-color-bg-selected-secondary, rgba(56, 132, 255, 0.06));
-      border-color: var(--figma-color-border-selected, rgba(56, 132, 255, 0.4));
+      background: #edf2ff;
+    }
+
+    html.figma-dark .current-command.active {
+      background: #1a2340;
     }
 
     .current-command-header {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 6px;
     }
 
     .spinner {
       width: 14px;
       height: 14px;
-      border: 2px solid var(--figma-color-border-selected, rgba(56, 132, 255, 0.5));
+      border: 2px solid rgba(56, 132, 255, 0.5);
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -187,6 +200,11 @@
 
     .current-command.active .spinner {
       display: block;
+    }
+
+    html.figma-dark .spinner {
+      border-color: rgba(91, 140, 255, 0.5);
+      border-top-color: transparent;
     }
 
     @keyframes spin {
@@ -200,31 +218,169 @@
     }
 
     .current-command.active .current-command-title {
-      color: var(--figma-color-text-brand, rgba(56, 132, 255, 0.9));
+      color: #386bd8;
+    }
+
+    html.figma-dark .current-command.active .current-command-title {
+      color: #5b8cff;
     }
 
     .current-command-details {
       display: flex;
-      justify-content: space-between;
+      margin-left: auto;
       font-size: 11px;
       color: var(--figma-color-text-secondary, #666);
     }
 
     .current-command.active .current-command-details {
-      color: var(--figma-color-text-brand-secondary, rgba(56, 132, 255, 0.7));
+      color: #4c7fd8;
+    }
+
+    html.figma-dark .current-command.active .current-command-details {
+      color: #4d7ad9;
     }
 
     .current-command-type {
-      font-family: 'SF Mono', Monaco, Consolas, monospace;
-      font-weight: 500;
+      font-family: inherit;
     }
 
+    /* ── Log entries (scrollable) ── */
+    .log-entries {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.5;
+      padding-top: 1px;
+    }
+
+    /* Scrollbar styling — theme-aware */
+    .log-entries::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .log-entries::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .log-entries::-webkit-scrollbar-thumb {
+      background: var(--figma-color-border, #e5e5e5);
+      border-radius: 3px;
+    }
+
+    .log-entries::-webkit-scrollbar-thumb:hover {
+      background: var(--figma-color-text-tertiary, #999);
+    }
+
+    .log-entry {
+      padding: 2px 0;
+      border-bottom: 1px solid var(--figma-color-border, rgba(229, 229, 229, 0.3));
+    }
+
+    html.figma-dark .log-entry {
+      border-bottom-color: rgba(68, 68, 68, 0.3);
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-entry.error {
+      color: var(--figma-color-text-danger, #ef4444);
+    }
+
+    .log-entry.success {
+      color: #21c55e;
+    }
+
+    .log-entry.executing {
+      color: #386bd8;
+    }
+
+    html.figma-dark .log-entry.executing {
+      color: #5b8cff;
+    }
+
+    .log-entries.errors-only .log-entry:not(.error) {
+      display: none;
+    }
+
+    .log-time {
+      color: var(--figma-color-text-tertiary, #999);
+      margin-right: 6px;
+    }
+
+    /* ── Version banner ── */
+    .version-banner {
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 11px;
+      display: none;
+    }
+
+    .version-banner.visible {
+      display: block;
+    }
+
+    .version-banner.error {
+      background: var(--figma-color-bg-danger, #fef2f2);
+      border: 1px solid var(--figma-color-border-danger, #ef4444);
+      color: var(--figma-color-text-danger, #b91c1c);
+    }
+
+    .version-banner.warning {
+      background: #fffbeb;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+    }
+
+    html.figma-dark .version-banner.warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+
+    .version-banner.info {
+      background: #eff6ff;
+      border: 1px solid #3b82f6;
+      color: #1e40af;
+    }
+
+    html.figma-dark .version-banner.info {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #93c5fd;
+    }
+
+    .version-banner-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .version-banner-dismiss {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0 2px;
+      color: inherit;
+      opacity: 0.6;
+    }
+
+    .version-banner-dismiss:hover {
+      opacity: 1;
+    }
+
+    /* ── Pending close notice ── */
     .pending-close-notice {
       background: var(--figma-color-bg-danger, #fef2f2);
       border: 1px solid var(--figma-color-border-danger, #ef4444);
       border-radius: 6px;
       padding: 8px;
-      margin-bottom: 12px;
       font-size: 11px;
       color: var(--figma-color-text-danger, #b91c1c);
       display: none;
@@ -237,9 +393,20 @@
 </head>
 <body>
   <div class="header">
-    <div id="statusIndicator" class="status-indicator connecting"></div>
-    <span class="title">Bridge to Fig</span>
-    <span id="statusText" class="status-text">Connecting...</span>
+    <div class="status-group">
+      <span id="statusText" class="status-text">Connecting...</span>
+      <div id="statusIndicator" class="status-indicator connecting"></div>
+    </div>
+    <button id="downloadBtn" class="download-btn" style="display:none">Download Server</button>
+  </div>
+
+  <div class="separator"></div>
+
+  <div id="versionBanner" class="version-banner" style="display: none;">
+    <div class="version-banner-content">
+      <span id="versionBannerMessage"></span>
+      <button id="versionBannerDismiss" class="version-banner-dismiss" style="display: none;">&times;</button>
+    </div>
   </div>
 
   <div id="pendingCloseNotice" class="pending-close-notice">
@@ -252,23 +419,24 @@
       <div id="commandCount" class="stat-value">0</div>
     </div>
     <div id="errorStat" class="error-toggle" title="Toggle: show errors only">
-      <div class="stat-label">Errors</div>
+      <div class="stat-label">View Errors</div>
       <div id="errorCount" class="stat-value">0</div>
     </div>
   </div>
 
-  <div id="currentCommand" class="current-command">
-    <div class="current-command-header">
-      <div class="spinner"></div>
-      <span id="currentCommandTitle" class="current-command-title">Ready</span>
-    </div>
-    <div class="current-command-details">
-      <span id="currentCommandType" class="current-command-type">Waiting for commands...</span>
-    </div>
-  </div>
-
   <div class="log" id="log">
-    <div class="log-entry">Initializing...</div>
+    <div id="currentCommand" class="current-command">
+      <div class="current-command-header">
+        <div class="spinner"></div>
+        <span id="currentCommandTitle" class="current-command-title">Ready</span>
+      </div>
+      <div class="current-command-details">
+        <span id="currentCommandType" class="current-command-type">Waiting for commands...</span>
+      </div>
+    </div>
+    <div class="log-entries" id="logEntries">
+      <div class="log-entry">Initializing...</div>
+    </div>
   </div>
 
   <script src="ui.js"></script>

@@ -1,3 +1,5 @@
+import { PROTOCOL_VERSION, MIN_PROTOCOL_VERSION, APP_VERSION } from '../version';
+
 // Types (inline to avoid bundling issues)
 interface FigmaCommand {
   id: string;
@@ -21,7 +23,21 @@ interface PollResponse {
   commands: FigmaCommand[];
 }
 
+export interface HealthCheckResult {
+  ok: boolean;
+  compatible: boolean;
+  serverVersion?: string;
+  serverProtocolVersion?: number;
+  latestRelease?: { version: string; url: string; notes: string };
+  error?: string;
+}
+
 const BRIDGE_URL = 'http://localhost:4001';
+
+const VERSION_HEADERS: Record<string, string> = {
+  'X-Plugin-Version': APP_VERSION,
+  'X-Plugin-Protocol': String(PROTOCOL_VERSION),
+};
 
 export async function pollCommands(): Promise<FigmaCommand[]> {
   try {
@@ -29,6 +45,7 @@ export async function pollCommands(): Promise<FigmaCommand[]> {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...VERSION_HEADERS,
       },
     });
 
@@ -51,6 +68,7 @@ export async function longPollCommands(timeoutMs: number = 30000): Promise<Figma
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...VERSION_HEADERS,
       },
     });
 
@@ -71,6 +89,7 @@ export async function submitResult(result: CommandResult): Promise<void> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...VERSION_HEADERS,
       },
       body: JSON.stringify(result),
     });
@@ -84,14 +103,52 @@ export async function submitResult(result: CommandResult): Promise<void> {
   }
 }
 
-export async function checkHealth(): Promise<boolean> {
+export async function checkHealth(): Promise<HealthCheckResult> {
   try {
     const response = await fetch(`${BRIDGE_URL}/health`, {
       method: 'GET',
+      headers: VERSION_HEADERS,
     });
-    return response.ok;
+
+    if (!response.ok) {
+      return { ok: false, compatible: false, error: `HTTP ${response.status}` };
+    }
+
+    const body = await response.json() as Record<string, unknown>;
+
+    const serverProto = typeof body.protocolVersion === 'number' ? body.protocolVersion : undefined;
+    const serverMinProto = typeof body.minPluginProtocolVersion === 'number' ? body.minPluginProtocolVersion : undefined;
+    const serverVersion = typeof body.serverVersion === 'string' ? body.serverVersion : undefined;
+
+    // If the server doesn't send protocol fields, assume compatible (old server)
+    let compatible = true;
+    if (serverProto !== undefined && serverMinProto !== undefined) {
+      // Bidirectional check: each side's protocol >= the other's minimum
+      compatible = serverProto >= MIN_PROTOCOL_VERSION && PROTOCOL_VERSION >= serverMinProto;
+    }
+
+    // Parse optional latestRelease from server
+    let latestRelease: HealthCheckResult['latestRelease'];
+    if (body.latestRelease && typeof body.latestRelease === 'object') {
+      const lr = body.latestRelease as Record<string, unknown>;
+      if (typeof lr.version === 'string' && typeof lr.url === 'string') {
+        latestRelease = {
+          version: lr.version,
+          url: lr.url,
+          notes: typeof lr.notes === 'string' ? lr.notes : '',
+        };
+      }
+    }
+
+    return {
+      ok: true,
+      compatible,
+      serverVersion,
+      serverProtocolVersion: serverProto,
+      ...(latestRelease ? { latestRelease } : {}),
+    };
   } catch (_e) {
-    return false;
+    return { ok: false, compatible: false, error: 'Connection failed' };
   }
 }
 
@@ -101,6 +158,7 @@ export function submitLog(message: string, type: 'info' | 'success' | 'error' = 
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...VERSION_HEADERS,
     },
     body: JSON.stringify({ message, type }),
   }).catch(() => {

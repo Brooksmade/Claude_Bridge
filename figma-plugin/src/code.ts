@@ -1,7 +1,9 @@
 import { longPollCommands, submitResult, checkHealth, submitLog } from './utils/api-client';
+import type { HealthCheckResult } from './utils/api-client';
 import { executeCommand } from './commands';
 import { preloadFonts } from './utils/node-factory';
 import type { FigmaCommand, CommandResult } from './commands/types';
+import { APP_VERSION } from './version';
 
 // Plugin state
 let isConnected = false;
@@ -150,10 +152,56 @@ async function longPollLoop(): Promise<void> {
       }
       // Wait a bit before retrying on error
       await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Re-check version on reconnect attempt
+      const health = await checkHealth();
+      if (health.ok && !health.compatible) {
+        sendVersionBanner(health);
+        setConnected(false, 'Incompatible server version');
+        log('Protocol mismatch after reconnect — stopping', 'error');
+        shouldStop = true;
+      }
     }
   }
 
   isPolling = false;
+}
+
+// Send version banner to UI
+function sendVersionBanner(health: HealthCheckResult): void {
+  if (!health.ok) return;
+
+  if (!health.compatible) {
+    sendToUI({
+      type: 'versionBanner',
+      level: 'error',
+      message: `Incompatible server (protocol v${health.serverProtocolVersion ?? '?'}). Please update ${health.serverProtocolVersion !== undefined && health.serverProtocolVersion < 1 ? 'the server' : 'the plugin'}.`,
+      dismissible: false,
+    });
+    return;
+  }
+
+  // Update available from GitHub Releases
+  if (health.latestRelease) {
+    sendToUI({
+      type: 'versionBanner',
+      level: 'warning',
+      message: `Update available: v${health.latestRelease.version}. See release notes.`,
+      dismissible: true,
+      url: health.latestRelease.url,
+    });
+    return;
+  }
+
+  // Compatible but different app version → soft warning
+  if (health.serverVersion && health.serverVersion !== APP_VERSION) {
+    sendToUI({
+      type: 'versionBanner',
+      level: 'warning',
+      message: `Server v${health.serverVersion} / Plugin v${APP_VERSION} — consider updating.`,
+      dismissible: true,
+    });
+  }
 }
 
 // Start polling
@@ -168,9 +216,15 @@ async function startPolling(): Promise<void> {
     log('Some fonts could not be preloaded', 'error');
   }
 
-  // Initial health check
-  const healthy = await checkHealth();
-  if (healthy) {
+  // Initial health check with version negotiation
+  const health = await checkHealth();
+  if (health.ok) {
+    sendVersionBanner(health);
+    if (!health.compatible) {
+      setConnected(false, 'Incompatible server version');
+      log('Protocol mismatch — polling disabled', 'error');
+      return;
+    }
     setConnected(true, 'Connected to bridge server');
   } else {
     setConnected(false, 'Bridge server not running - waiting...');
@@ -196,6 +250,8 @@ figma.ui.onmessage = (message: any) => {
       errorsCount,
       isConnected,
     });
+  } else if (message.type === 'openExternal' && typeof message.url === 'string') {
+    figma.openExternal(message.url);
   }
 };
 

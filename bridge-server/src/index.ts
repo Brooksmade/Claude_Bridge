@@ -6,6 +6,8 @@ import resultsRouter from './routes/results.js';
 import logsRouter from './routes/logs.js';
 import { setupWebSocket, getConnectedClients } from './services/websocket.js';
 import { queue } from './services/queue.js';
+import { startUpdateChecker, getLatestRelease, stopUpdateChecker } from './services/updateChecker.js';
+import { PROTOCOL_VERSION, MIN_PROTOCOL_VERSION, APP_VERSION } from '@bridge-to-fig/shared';
 
 const app = express();
 const PORT = process.env.PORT || 4001;
@@ -30,12 +32,17 @@ app.use('/logs', logsRouter);
 // Health check endpoint
 app.get('/health', (_req, res) => {
   const stats = queue.getStats();
+  const latestRelease = getLatestRelease();
   res.json({
     status: 'ok',
     timestamp: Date.now(),
     wsClients: getConnectedClients(),
     pendingCommands: stats.pendingCommands,
     storedResults: stats.storedResults,
+    serverVersion: APP_VERSION,
+    protocolVersion: PROTOCOL_VERSION,
+    minPluginProtocolVersion: MIN_PROTOCOL_VERSION,
+    ...(latestRelease ? { latestRelease } : {}),
   });
 });
 
@@ -61,6 +68,8 @@ app.use((req, res, next) => {
 function shutdown() {
   console.log('\nShutting down gracefully...');
 
+  stopUpdateChecker();
+
   // Close all active connections
   for (const res of activeConnections) {
     res.end();
@@ -80,6 +89,15 @@ function shutdown() {
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
+
+// Start update checker before listening
+startUpdateChecker((release) => {
+  if (release) {
+    console.log('');
+    console.log(`  Update available: v${release.version} (current: v${APP_VERSION})`);
+    console.log(`    ${release.url}`);
+  }
+});
 
 // Start server
 server.listen(PORT, () => {
