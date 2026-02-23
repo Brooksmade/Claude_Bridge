@@ -115,6 +115,27 @@ modify(content, layoutSizingHorizontal="FILL", layoutGrow=1)
 - [ ] Set `primaryAxisSizingMode: "FIXED"` and `counterAxisSizingMode: "FIXED"` on root frames with explicit dimensions
 - [ ] Use Python scripts in `.tmp/` — never inline bash JSON for layouts
 - [ ] Delete `.tmp/` scripts after use
+- [ ] **Screenshot the result and compare against reference** — never skip this
+
+## Verify: Screenshot and Compare (MANDATORY)
+
+After building any layout, you MUST screenshot the result and compare it against the reference. Never assume it looks right — always verify visually.
+
+1. **Screenshot your work** using the Figma desktop MCP tool:
+   ```
+   mcp__plugin_figma_figma-desktop__get_screenshot(nodeId="YOUR_FRAME_ID")
+   ```
+
+2. **Compare against the reference** — if the user provided a screenshot, compare side by side. Check:
+   - Do all elements fill their parent width? (most common failure)
+   - Are spacing and padding correct?
+   - Are colors accurate?
+   - Is text truncated or overflowing?
+   - Does the overall structure match?
+
+3. **If something is off**, fix it and screenshot again. Don't report done until the screenshot matches.
+
+---
 
 ## Figma Color Format
 
