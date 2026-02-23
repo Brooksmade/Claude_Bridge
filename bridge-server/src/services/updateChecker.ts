@@ -1,7 +1,7 @@
 import { APP_VERSION } from '@bridge-to-fig/shared';
 
 const GITHUB_OWNER = 'Brooksmade';
-const GITHUB_REPO = 'Claude_Bridge';
+const GITHUB_REPO = 'Bridge-to-Fig';
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 export interface LatestRelease {

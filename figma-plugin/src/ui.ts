@@ -142,7 +142,7 @@ versionBannerDismissEl.addEventListener('click', () => {
 
 // Download button — open GitHub releases page
 downloadBtnEl.addEventListener('click', () => {
-  parent.postMessage({ pluginMessage: { type: 'openExternal', url: 'https://github.com/Brooksmade/Claude_Bridge/releases' } }, '*');
+  parent.postMessage({ pluginMessage: { type: 'openExternal', url: 'https://github.com/Brooksmade/Bridge-to-Fig/releases' } }, '*');
 });
 
 // Error filter toggle
