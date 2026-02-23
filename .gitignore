@@ -25,6 +25,9 @@ nul
 # Plans (local planning docs)
 plans/
 
+# Publish assets (screenshots, listing docs)
+publish/
+
 # Temp files (session artifacts from Claude Code)
 .tmp/*
 !.tmp/.gitkeep
