@@ -123,6 +123,13 @@ export interface NodeProperties {
   paddingBottom?: number;
   padding?: number; // Shorthand for all sides
 
+  // Auto Layout - Child Properties (how a child behaves in parent's auto-layout)
+  layoutAlign?: 'STRETCH' | 'INHERIT';
+  layoutGrow?: number;
+  layoutPositioning?: 'AUTO' | 'ABSOLUTE';
+  layoutSizingHorizontal?: 'FILL' | 'FIXED' | 'HUG';
+  layoutSizingVertical?: 'FILL' | 'FIXED' | 'HUG';
+
   // Constraints
   constraints?: {
     horizontal: 'MIN' | 'CENTER' | 'MAX' | 'STRETCH' | 'SCALE';

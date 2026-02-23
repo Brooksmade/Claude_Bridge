@@ -6,14 +6,22 @@ import { successResult, errorResult } from './types';
 // Set auto layout on a frame
 export async function handleSetAutoLayout(command: FigmaCommand): Promise<CommandResult> {
   var payload = command.payload as {
-    mode: 'HORIZONTAL' | 'VERTICAL' | 'NONE';
+    mode?: 'HORIZONTAL' | 'VERTICAL' | 'NONE';
+    direction?: 'HORIZONTAL' | 'VERTICAL' | 'NONE'; // alias for mode
     spacing?: number;
+    itemSpacing?: number; // alias for spacing
     padding?: number | { top?: number; right?: number; bottom?: number; left?: number };
+    paddingLeft?: number;
+    paddingRight?: number;
+    paddingTop?: number;
+    paddingBottom?: number;
     primaryAxisAlignItems?: 'MIN' | 'MAX' | 'CENTER' | 'SPACE_BETWEEN';
     counterAxisAlignItems?: 'MIN' | 'MAX' | 'CENTER' | 'BASELINE';
     layoutWrap?: 'NO_WRAP' | 'WRAP';
     primaryAxisSizing?: 'FIXED' | 'AUTO';
     counterAxisSizing?: 'FIXED' | 'AUTO';
+    primaryAxisSizingMode?: 'FIXED' | 'AUTO'; // alias
+    counterAxisSizingMode?: 'FIXED' | 'AUTO'; // alias
   };
 
   if (!command.target) {
@@ -31,10 +39,11 @@ export async function handleSetAutoLayout(command: FigmaCommand): Promise<Comman
 
   var frame = node as FrameNode;
 
-  // Set layout mode
-  frame.layoutMode = payload.mode || 'VERTICAL';
+  // Set layout mode (accept both 'mode' and 'direction')
+  var layoutMode = payload.mode || payload.direction || 'VERTICAL';
+  frame.layoutMode = layoutMode;
 
-  if (payload.mode === 'NONE') {
+  if (layoutMode === 'NONE') {
     return successResult(command.id, {
       data: {
         nodeId: frame.id,
@@ -43,12 +52,13 @@ export async function handleSetAutoLayout(command: FigmaCommand): Promise<Comman
     });
   }
 
-  // Set spacing
-  if (payload.spacing !== undefined) {
-    frame.itemSpacing = payload.spacing;
+  // Set spacing (accept both 'spacing' and 'itemSpacing')
+  var spacing = payload.spacing ?? payload.itemSpacing;
+  if (spacing !== undefined) {
+    frame.itemSpacing = spacing;
   }
 
-  // Set padding
+  // Set padding - accept object, shorthand number, or individual fields
   if (payload.padding !== undefined) {
     if (typeof payload.padding === 'number') {
       frame.paddingTop = payload.padding;
@@ -62,6 +72,11 @@ export async function handleSetAutoLayout(command: FigmaCommand): Promise<Comman
       if (payload.padding.left !== undefined) frame.paddingLeft = payload.padding.left;
     }
   }
+  // Also accept individual paddingLeft/Right/Top/Bottom fields directly
+  if (payload.paddingLeft !== undefined) frame.paddingLeft = payload.paddingLeft;
+  if (payload.paddingRight !== undefined) frame.paddingRight = payload.paddingRight;
+  if (payload.paddingTop !== undefined) frame.paddingTop = payload.paddingTop;
+  if (payload.paddingBottom !== undefined) frame.paddingBottom = payload.paddingBottom;
 
   // Set alignment
   if (payload.primaryAxisAlignItems) {
@@ -77,13 +92,15 @@ export async function handleSetAutoLayout(command: FigmaCommand): Promise<Comman
     frame.layoutWrap = payload.layoutWrap;
   }
 
-  // Set sizing
-  if (payload.primaryAxisSizing) {
-    frame.primaryAxisSizingMode = payload.primaryAxisSizing;
+  // Set sizing (accept both short and full property names)
+  var primarySizing = payload.primaryAxisSizing || payload.primaryAxisSizingMode;
+  if (primarySizing) {
+    frame.primaryAxisSizingMode = primarySizing;
   }
 
-  if (payload.counterAxisSizing) {
-    frame.counterAxisSizingMode = payload.counterAxisSizing;
+  var counterSizing = payload.counterAxisSizing || payload.counterAxisSizingMode;
+  if (counterSizing) {
+    frame.counterAxisSizingMode = counterSizing;
   }
 
   return successResult(command.id, {

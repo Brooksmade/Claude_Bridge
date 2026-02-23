@@ -14,7 +14,7 @@ let errorsCount = 0;
 const LONG_POLL_TIMEOUT_MS = 30000;
 
 // Show the UI
-figma.showUI(__html__, { width: 280, height: 330 });
+figma.showUI(__html__, { width: 280, height: 330, themeColors: true });
 
 // Send message to UI
 function sendToUI(message: object): void {

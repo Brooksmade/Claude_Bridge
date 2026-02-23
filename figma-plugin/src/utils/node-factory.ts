@@ -162,6 +162,34 @@ export async function applyProperties(node: SceneNode, properties: NodePropertie
   if (node.type === 'FRAME' || node.type === 'COMPONENT') {
     applyAutoLayoutProperties(node as FrameNode | ComponentNode, properties);
   }
+
+  // Note: child layout properties (layoutSizingHorizontal, layoutGrow, etc.)
+  // are applied separately via applyChildLayoutProperties() AFTER the node
+  // is appended to its parent, since they require an auto-layout parent.
+}
+
+// Apply child layout properties - must be called AFTER node is in an auto-layout parent
+export function applyChildLayoutProperties(node: SceneNode, properties: NodeProperties): void {
+  try {
+    if (properties.layoutAlign !== undefined && 'layoutAlign' in node) {
+      (node as any).layoutAlign = properties.layoutAlign;
+    }
+    if (properties.layoutGrow !== undefined && 'layoutGrow' in node) {
+      (node as any).layoutGrow = properties.layoutGrow;
+    }
+    if (properties.layoutSizingHorizontal !== undefined && 'layoutSizingHorizontal' in node) {
+      (node as any).layoutSizingHorizontal = properties.layoutSizingHorizontal;
+    }
+    if (properties.layoutSizingVertical !== undefined && 'layoutSizingVertical' in node) {
+      (node as any).layoutSizingVertical = properties.layoutSizingVertical;
+    }
+    if (properties.layoutPositioning !== undefined && 'layoutPositioning' in node) {
+      (node as any).layoutPositioning = properties.layoutPositioning;
+    }
+  } catch (e) {
+    // Silently ignore if node is not in an auto-layout context
+    console.warn('[applyChildLayoutProperties]', e);
+  }
 }
 
 // Apply corner radius properties

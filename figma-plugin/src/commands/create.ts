@@ -1,6 +1,6 @@
 import type { FigmaCommand, CommandResult, CreatePayload } from './types';
 import { successResult, errorResult } from './types';
-import { createNode, applyProperties, getParentNode } from '../utils/node-factory';
+import { createNode, applyProperties, applyChildLayoutProperties, getParentNode } from '../utils/node-factory';
 
 export async function handleCreate(command: FigmaCommand): Promise<CommandResult> {
   const payload = command.payload as CreatePayload;
@@ -19,7 +19,7 @@ export async function handleCreate(command: FigmaCommand): Promise<CommandResult
     // Create the node
     const node = createNode(payload.nodeType);
 
-    // Apply properties
+    // Apply properties (except child layout props which need parent first)
     const properties = payload.properties || {};
     await applyProperties(node, properties);
 
@@ -27,6 +27,10 @@ export async function handleCreate(command: FigmaCommand): Promise<CommandResult
     if (payload.parent && parent !== figma.currentPage) {
       parent.appendChild(node);
     }
+
+    // Apply child layout properties AFTER appending to parent
+    // (layoutSizingHorizontal, layoutGrow, etc. require an auto-layout parent)
+    applyChildLayoutProperties(node, properties);
 
     // Handle nested children recursively
     const allNodeIds: string[] = [node.id];
@@ -83,6 +87,9 @@ async function createChild(
     await applyProperties(node, properties);
 
     parent.appendChild(node);
+
+    // Apply child layout properties after appendChild
+    applyChildLayoutProperties(node, properties);
 
     const allNodeIds: string[] = [node.id];
 
