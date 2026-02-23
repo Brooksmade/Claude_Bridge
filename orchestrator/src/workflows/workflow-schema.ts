@@ -21,6 +21,8 @@ export interface WorkflowDefinition {
   phases: WorkflowPhase[];
   /** Rules/guidelines for the LLM */
   rules?: string[];
+  /** IDs of child workflows this orchestrator coordinates */
+  subWorkflows?: string[];
 }
 
 /**
