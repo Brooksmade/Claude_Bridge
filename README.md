@@ -76,59 +76,6 @@ The plugin UI will show a green "Connected" status when successfully connected t
 | Design system validation | Checks structure, modes, naming, alias chains | Not available |
 | 9 slash commands | One-command workflows: `/design-system`, `/accessibility-audit`, `/figjam-workflow`, etc. | Not available |
 
-## Design Workflow
-
-### 3-Step Layout Rule
-
-When building layouts in Figma through the bridge, child layout properties (`layoutSizingHorizontal`, `layoutSizingVertical`, `layoutGrow`) **silently fail** if set during node creation. Always follow this pattern:
-
-1. **Create** the node (frame, rectangle, text, etc.)
-2. **Set auto layout** on the parent frame (`setAutoLayout`)
-3. **Modify** child nodes to apply layout sizing (`FILL`, `HUG`, `GROW`)
-
-```bash
-# Step 1: Create a frame
-curl -X POST http://localhost:4001/commands \
-  -d '{"type": "create", "payload": {"nodeType": "FRAME", "properties": {"name": "Card", "width": 320, "height": 200}}}'
-
-# Step 2: Set auto layout
-curl -X POST http://localhost:4001/commands \
-  -d '{"type": "setAutoLayout", "target": "CARD_ID", "payload": {"direction": "VERTICAL", "spacing": 12, "padding": 16}}'
-
-# Step 3: Modify children for FILL/HUG
-curl -X POST http://localhost:4001/commands \
-  -d '{"type": "modify", "target": "CHILD_ID", "payload": {"properties": {"layoutSizingHorizontal": "FILL"}}}'
-```
-
-### Python Script Pattern
-
-For multi-element creation with complex JSON payloads, use Python scripts instead of bash (avoids quoting issues with nested JSON):
-
-```python
-import requests, json
-
-def send(cmd):
-    r = requests.post("http://localhost:4001/commands", json=cmd)
-    cmd_id = r.json()["id"]
-    return requests.get(f"http://localhost:4001/results/{cmd_id}?wait=true").json()
-
-# Create parent frame
-result = send({"type": "create", "payload": {"nodeType": "FRAME", "properties": {"name": "Layout", "width": 400, "height": 300}}})
-frame_id = result["data"]["nodeId"]
-
-# Set auto layout
-send({"type": "setAutoLayout", "target": frame_id, "payload": {"direction": "VERTICAL", "spacing": 16}})
-```
-
-### Screenshot Verification
-
-After building layouts, always verify the result visually by exporting a screenshot:
-
-```bash
-curl -X POST http://localhost:4001/commands \
-  -d '{"type": "exportNode", "target": "FRAME_ID", "payload": {"format": "PNG", "scale": 1}}'
-```
-
 ## Workflow Slash Commands
 
 Ready-to-use pipelines invoked directly in Claude Code with `/command-name`:
@@ -144,6 +91,26 @@ Ready-to-use pipelines invoked directly in Claude Code with `/command-name`:
 | `/typography-system` | Audit → Load → Style/Format → Report | Font audits, mixed text styles, font replacement, hyperlink formatting |
 | `/accessibility-audit` | Extract → Contrast → Targets → Text → Report | WCAG 2.1 AA/AAA audit with contrast checks, touch targets, and visual reports |
 | `/design-to-dev` | Audit → System → Components → A11y → Handoff | Master pipeline that orchestrates all 5 phases of design-to-development |
+
+### Design System Commands
+
+`createDesignSystem` creates all 4 collection levels with proper mode configuration in one command:
+- **Primitive [ Level 1 ]**: Gray scale, brand color scales, and boilerplate tokens
+- **Semantic [ Level 2 ]**: Brand colors and system feedback colors (Light/Dark modes)
+- **Tokens [ Level 3 ]**: Surface, text, border, icon tokens (Light Mode/Dark Mode)
+- **Theme**: Background, foreground, border, interactive, feedback colors (Light/Dark modes)
+
+```bash
+curl -X POST http://localhost:4001/commands \
+  -H "Content-Type: application/json" \
+  -d '{"type": "createDesignSystem", "payload": {"brandColors": {"primary": "#ff6d38"}}}'
+```
+
+| Command | Description |
+|---------|-------------|
+| `createDesignSystem` | Create complete 4-level variable hierarchy in one command |
+| `validateDesignSystem` | Validate design system completeness and identify issues |
+| `getDesignSystemStatus` | Quick status check for design system readiness |
 
 ## Sending Commands
 
@@ -396,27 +363,6 @@ curl "http://localhost:4001/results/{commandId}"
 | `base64Decode` | Decode base64 data |
 | `getNodeColors` | Get colors from node |
 | `analyzeColors` | Analyze colors in selection |
-
-### Design System (3 commands) ⭐ NEW
-
-| Command | Description |
-|---------|-------------|
-| `createDesignSystem` | Create complete 4-level variable hierarchy in one command |
-| `validateDesignSystem` | Validate design system completeness and identify issues |
-| `getDesignSystemStatus` | Quick status check for design system readiness |
-
-**createDesignSystem** creates all 4 collection levels with proper mode configuration:
-- **Primitive [ Level 1 ]**: Gray scale, brand color scales, and boilerplate tokens
-- **Semantic [ Level 2 ]**: Brand colors and system feedback colors (Light/Dark modes)
-- **Tokens [ Level 3 ]**: Surface, text, border, icon tokens (Light Mode/Dark Mode)
-- **Theme**: Background, foreground, border, interactive, feedback colors (Light/Dark modes)
-
-Example:
-```bash
-curl -X POST http://localhost:4001/commands \
-  -H "Content-Type: application/json" \
-  -d '{"type": "createDesignSystem", "payload": {"brandColors": {"primary": "#ff6d38"}}}'
-```
 
 ## Property Reference
 
