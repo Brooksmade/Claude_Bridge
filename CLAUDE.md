@@ -329,6 +329,8 @@ Press `Ctrl+C` to stop the bridge server. It will:
 
 ## Tips
 
+- **Building layouts** — MUST follow the 3-step rule: `create` → `setAutoLayout` → `modify` (for FILL/HUG/GROW). Child layout properties silently fail if set during creation. Always use Python scripts, not bash. Full pattern and helpers: **`.claude/prompts/figma-layout.md`**
+
 - **FigJam diagrams** - ALWAYS use bridge server commands (`createSection`, `createShapeWithText`, `createConnector` via `localhost:4001`). NEVER use MCP tools like `generate_diagram` for FigJam — they create separate files instead of drawing in the user's open board. Only use MCP Figma tools for FigJam if the user explicitly requests it.
 - **Always query first** - Get node IDs before modifying
 - **Use Inter font** - Pre-loaded; others may cause errors

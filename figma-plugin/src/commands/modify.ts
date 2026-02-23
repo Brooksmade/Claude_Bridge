@@ -1,6 +1,6 @@
 import type { FigmaCommand, CommandResult, ModifyPayload } from './types';
 import { successResult, errorResult } from './types';
-import { applyProperties, serializeNode } from '../utils/node-factory';
+import { applyProperties, applyChildLayoutProperties, serializeNode } from '../utils/node-factory';
 
 export async function handleModify(command: FigmaCommand): Promise<CommandResult> {
   const targetId = command.target;
@@ -24,6 +24,7 @@ export async function handleModify(command: FigmaCommand): Promise<CommandResult
 
   try {
     await applyProperties(node as SceneNode, properties);
+    applyChildLayoutProperties(node as SceneNode, properties);
 
     return successResult(command.id, {
       nodeId: node.id,
@@ -64,6 +65,7 @@ export async function handleBatchModify(command: FigmaCommand): Promise<CommandR
 
     try {
       await applyProperties(node as SceneNode, payload.properties || {});
+      applyChildLayoutProperties(node as SceneNode, payload.properties || {});
       modifiedIds.push(node.id);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

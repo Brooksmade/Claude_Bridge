@@ -8,6 +8,22 @@ Bridge server: http://localhost:4001
 
 ---
 
+## CRITICAL: 3-Step Layout Rule
+
+**Read `.claude/prompts/figma-layout.md` before creating ANY layout.**
+
+Child layout properties (`layoutSizingHorizontal`, `layoutGrow`, `layoutSizingVertical`) silently fail if set during `create` — the node isn't in an auto-layout parent yet. You MUST follow this sequence:
+
+```
+1. create       → frame with basic props (fills, cornerRadius, strokes)
+2. setAutoLayout → on that frame (direction, spacing, padding)
+3. modify        → child sizing (layoutSizingHorizontal: "FILL", layoutGrow: 1, etc.)
+```
+
+**Always use Python scripts** (written to `.tmp/`) for multi-element layouts. Bash with inline JSON breaks on complex payloads. See `.claude/prompts/figma-layout.md` for reusable helpers.
+
+---
+
 ## When to Use This Agent
 
 - Converting static frames to auto-layout
@@ -323,13 +339,14 @@ curl -s -X POST http://localhost:4001/commands -H "Content-Type: application/jso
 
 ## Best Practices
 
-1. **Start from outer frames** - Configure parent layout before children
-2. **Use consistent spacing** - Match design system spacing tokens
-3. **Prefer auto-sizing** - Let content determine size when possible
-4. **Set constraints on non-auto-layout** - For frames without auto layout
-5. **Test with content changes** - Verify layout adapts correctly
-6. **Use STRETCH for full-width children** - In vertical layouts
-7. **Use layoutGrow for flexible items** - To fill remaining space
+1. **Always follow the 3-step rule** - create → setAutoLayout → modify (FILL/HUG/GROW)
+2. **Start from outer frames** - Configure parent layout before children
+3. **Use Python scripts** - Write to `.tmp/`, never inline bash JSON for layouts
+4. **Use consistent spacing** - Match design system spacing tokens
+5. **Prefer auto-sizing** - Let content determine size when possible
+6. **Set constraints on non-auto-layout** - For frames without auto layout
+7. **Test with content changes** - Verify layout adapts correctly
+8. **Use `modify` for FILL/GROW** - Never set these during `create`
 
 ---
 
