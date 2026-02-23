@@ -1,4 +1,4 @@
-# Claude Figma Bridge: Workflow Pipelines
+# Bridge to Fig: Workflow Pipelines
 
 Why this tool exists and what makes it different: every major workflow is an **automated pipeline** that chains commands together, passing data from step to step. What takes hours by hand takes minutes through the bridge.
 
@@ -407,7 +407,7 @@ PHASE 5: engineering-handoff (Workflow 6)
 
 ---
 
-## Why Claude Figma Bridge Over Alternatives
+## Why Bridge to Fig Over Alternatives
 
 ### vs. Manual Figma Work
 Every workflow above replaces hours of clicking through Figma's UI. The bridge doesn't just automate individual actions — it chains them into pipelines where **each step's output feeds the next step's input**.
@@ -418,7 +418,7 @@ The REST API is read-only for most operations. It can read variables and styles 
 ### vs. MCP-Based Figma Tools (e.g., figma-console-mcp)
 MCP tools expose individual operations as tools. They can create a variable or resize a node. But they don't have:
 
-| Capability | Claude Bridge | MCP Tools |
+| Capability | Bridge to Fig | MCP Tools |
 |---|---|---|
 | **One-command design system** | `createDesignSystem` creates 4-level hierarchy with 130+ variables | Must call individual CRUD operations 130+ times |
 | **Automatic binding** | `extractDesignTokens` tracks node→value maps, `createDesignSystem` binds during creation | No node tracking, no automatic binding |
@@ -432,4 +432,4 @@ MCP tools expose individual operations as tools. They can create a variable or r
 | **30 agent workflows** | Pre-built multi-step pipelines with data flow between steps | Individual tool calls only |
 | **Design system validation** | Checks structure, modes, naming, alias chains | Not available |
 
-The core difference: MCP tools give you **individual operations**. Claude Bridge gives you **pipelines** — extract → classify → create → bind → validate — where the hard part isn't any single step, it's the data flow between steps.
+The core difference: MCP tools give you **individual operations**. Bridge to Fig gives you **pipelines** — extract → classify → create → bind → validate — where the hard part isn't any single step, it's the data flow between steps.

@@ -1,5 +1,5 @@
 import { Router, type Request, type Response, type Router as RouterType } from 'express';
-import type { CommandResult } from '@figma-claude-bridge/shared';
+import type { CommandResult } from '@bridge-to-fig/shared';
 import { queue } from '../services/queue.js';
 
 const router: RouterType = Router();

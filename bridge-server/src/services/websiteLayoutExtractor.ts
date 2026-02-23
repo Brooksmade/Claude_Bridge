@@ -7,7 +7,7 @@ import type {
   ImageReference,
   LayoutExtractionOptions,
   LayoutExtractionResult,
-} from '@figma-claude-bridge/shared';
+} from '@bridge-to-fig/shared';
 
 /**
  * Deduplicate raw sections into non-overlapping top-level sections.

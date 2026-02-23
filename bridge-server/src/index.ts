@@ -85,7 +85,7 @@ process.on('SIGTERM', shutdown);
 server.listen(PORT, () => {
   console.log('');
   console.log('='.repeat(50));
-  console.log('  Figma Claude Bridge Server');
+  console.log('  Bridge to Fig Server');
   console.log('='.repeat(50));
   console.log(`  HTTP:      http://localhost:${PORT}`);
   console.log(`  WebSocket: ws://localhost:${PORT}/ws`);

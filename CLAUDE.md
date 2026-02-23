@@ -1,6 +1,6 @@
-# Claude Figma Bridge
+# Bridge to Fig
 
-A real-time bridge enabling Claude Code to interact with Figma directly. Create, modify, and manipulate design elements, manage variables, build design systems, and extract design tokens from live websites.
+A real-time bridge enabling AI agents to interact with Figma directly. Create, modify, and manipulate design elements, manage variables, build design systems, and extract design tokens from live websites.
 
 ## Quick Start
 
@@ -9,7 +9,7 @@ A real-time bridge enabling Claude Code to interact with Figma directly. Create,
 pnpm dev
 
 # Server runs at http://localhost:4001
-# Open Figma plugin: Plugins → Development → Claude Figma Bridge
+# Open Figma plugin: Plugins → Development → Bridge to Fig
 ```
 
 ## Project Structure
@@ -149,7 +149,7 @@ Full list in `prompts/figma-bridge.md` → Related Agents section.
 
 ## Why This Tool
 
-Claude Figma Bridge is not a collection of individual Figma operations. It is a set of **automated pipelines** where each step's output feeds the next step's input. The value is in the data flow between steps, not any single command.
+Bridge to Fig is not a collection of individual Figma operations. It is a set of **automated pipelines** where each step's output feeds the next step's input. The value is in the data flow between steps, not any single command.
 
 ### Core Pipelines
 
@@ -243,7 +243,7 @@ pnpm build:plugin
 1. `pnpm build:plugin`
 2. Figma → Plugins → Development → Import plugin from manifest
 3. Select `figma-plugin/dist/manifest.json`
-4. Open: Plugins → Development → Claude Figma Bridge
+4. Open: Plugins → Development → Bridge to Fig
 
 ## File Reference
 

@@ -11,7 +11,7 @@ End-to-end tests that verify the full workflow: extraction → design system cre
 
 2. **Figma plugin loaded and connected**:
    - Open Figma desktop app
-   - Plugins → Development → Claude Figma Bridge
+   - Plugins → Development → Bridge to Fig
    - Plugin should show "Connected" status
 
 3. **Figma file with design elements**:

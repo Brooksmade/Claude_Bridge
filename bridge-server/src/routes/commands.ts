@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type Router as RouterType } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import type { FigmaCommand, CommandPayload, CommandType } from '@figma-claude-bridge/shared';
+import type { FigmaCommand, CommandPayload, CommandType } from '@bridge-to-fig/shared';
 import { queue } from '../services/queue.js';
 import { broadcast } from '../services/websocket.js';
 import { extractWebsiteCSS } from '../services/websiteExtractor.js';

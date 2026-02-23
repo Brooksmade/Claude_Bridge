@@ -1,6 +1,6 @@
-# Claude Figma Bridge - System Prompt
+# Bridge to Fig - System Prompt
 
-Use this prompt to enable Claude to interact with Figma through the Claude Figma Bridge.
+Use this prompt to enable Claude to interact with Figma through Bridge to Fig.
 
 **Current Version:** 1.7.0 | **Commands:** 175 | **Agents:** 31 | **Last Updated:** February 2026
 
@@ -752,7 +752,7 @@ pnpm dev
 The server will start at `http://localhost:4001`. You should see:
 ```
 ==================================================
-  Figma Claude Bridge Server
+  Bridge to Fig Server
 ==================================================
   HTTP:      http://localhost:4001
   WebSocket: ws://localhost:4001/ws
@@ -764,7 +764,7 @@ The server will start at `http://localhost:4001`. You should see:
 1. Build the plugin: `pnpm build:plugin`
 2. In Figma: **Plugins → Development → Import plugin from manifest**
 3. Select `figma-plugin/dist/manifest.json`
-4. Open the plugin from **Plugins → Development → Claude Figma Bridge**
+4. Open the plugin from **Plugins → Development → Bridge to Fig**
 
 ## Usage Notes
 

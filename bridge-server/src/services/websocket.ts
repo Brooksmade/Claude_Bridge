@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
-import type { CommandResult, StatusUpdate } from '@figma-claude-bridge/shared';
+import type { CommandResult, StatusUpdate } from '@bridge-to-fig/shared';
 import { queue } from './queue.js';
 
 let wss: WebSocketServer | null = null;
@@ -16,7 +16,7 @@ export function setupWebSocket(server: Server): WebSocketServer {
     // Send connection confirmation
     const statusUpdate: StatusUpdate = {
       type: 'connected',
-      message: 'Connected to Figma Claude Bridge',
+      message: 'Connected to Bridge to Fig',
       timestamp: Date.now(),
     };
     ws.send(JSON.stringify(statusUpdate));

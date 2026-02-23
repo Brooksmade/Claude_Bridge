@@ -1,6 +1,6 @@
 {
-  "name": "Claude Bridge",
-  "id": "claude-figma-bridge",
+  "name": "Bridge to Fig",
+  "id": "bridge-to-fig",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
@@ -9,6 +9,6 @@
   "enablePrivatePluginApi": true,
   "networkAccess": {
     "allowedDomains": ["http://localhost:4001"],
-    "reasoning": "Required to communicate with the local Claude Bridge server for real-time design manipulation"
+    "reasoning": "Required to communicate with the local Bridge to Fig server for real-time design manipulation"
   }
 }

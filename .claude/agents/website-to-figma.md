@@ -52,7 +52,7 @@ Run in background. Poll until healthy:
 curl -s http://localhost:4001/health
 ```
 
-Remind the user to open the Figma plugin: **Plugins → Development → Claude Figma Bridge**
+Remind the user to open the Figma plugin: **Plugins → Development → Bridge to Fig**
 
 Verify plugin connection:
 

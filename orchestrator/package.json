@@ -1,5 +1,5 @@
 {
-  "name": "@figma-claude-bridge/orchestrator",
+  "name": "@bridge-to-fig/orchestrator",
   "version": "1.0.0",
   "private": true,
   "type": "module",

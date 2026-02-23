@@ -1,10 +1,10 @@
-# Claude Code ↔ Figma Bridge ↔ Figma/Figjam
+# Bridge to Fig
 
-A real-time bridge that enables Claude Code to create, modify, and manipulate design elements directly on Figma canvases through natural language commands.
+A real-time bridge that enables AI agents to create, modify, and manipulate design elements directly on Figma canvases through natural language commands.
 
-**Current Version:** 1.3.0 | **Commands:** 136+ | **Workflows:** 9 slash commands | **Agents:** 31 | **Last Updated:** February 2025
+**Current Version:** 1.3.0 | **Commands:** 136+ | **Workflows:** 9 slash commands | **Agents:** 31 | **Last Updated:** February 2026
 
-**[View Pipeline & Agent Workflows (FigJam)](https://www.figma.com/board/FlZ6wXhS4pwOaUJIDnGaRS/Claude-Figma-Bridge---Pipeline---Agent-Workflows?node-id=0-1&t=sc5z843n81FYYugn-1)** — Visual diagrams of all 9 core pipelines and 31 agent workflows
+**[View Pipeline & Agent Workflows (FigJam)](https://www.figma.com/board/FlZ6wXhS4pwOaUJIDnGaRS/Bridge-to-Fig---Pipeline---Agent-Workflows?node-id=0-1&t=sc5z843n81FYYugn-1)** — Visual diagrams of all 9 core pipelines and 31 agent workflows
 
 ## Overview
 
@@ -55,13 +55,13 @@ The server will start at `http://localhost:4001`.
 
 1. In Figma, go to **Plugins → Development → Import plugin from manifest**
 2. Select `figma-plugin/dist/manifest.json`
-3. Open the plugin from **Plugins → Development → Claude Figma Bridge**
+3. Open the plugin from **Plugins → Development → Bridge to Fig**
 
 The plugin UI will show a green "Connected" status when successfully connected to the bridge server.
 
-## Claude Bridge vs MCP Tools
+## Bridge to Fig vs MCP Tools
 
-| Capability | Claude Bridge | MCP Tools |
+| Capability | Bridge to Fig | MCP Tools |
 |------------|--------------|-----------|
 | One-command design system | `createDesignSystem` creates 4-level hierarchy with 130+ variables | Must call individual CRUD operations 130+ times |
 | Automatic binding | `extractDesignTokens` tracks node→value maps, `createDesignSystem` binds during creation | No node tracking, no automatic binding |
@@ -75,6 +75,59 @@ The plugin UI will show a green "Connected" status when successfully connected t
 | 30 agent workflows | Pre-built multi-step pipelines with data flow between steps | Individual tool calls only |
 | Design system validation | Checks structure, modes, naming, alias chains | Not available |
 | 9 slash commands | One-command workflows: `/design-system`, `/accessibility-audit`, `/figjam-workflow`, etc. | Not available |
+
+## Design Workflow
+
+### 3-Step Layout Rule
+
+When building layouts in Figma through the bridge, child layout properties (`layoutSizingHorizontal`, `layoutSizingVertical`, `layoutGrow`) **silently fail** if set during node creation. Always follow this pattern:
+
+1. **Create** the node (frame, rectangle, text, etc.)
+2. **Set auto layout** on the parent frame (`setAutoLayout`)
+3. **Modify** child nodes to apply layout sizing (`FILL`, `HUG`, `GROW`)
+
+```bash
+# Step 1: Create a frame
+curl -X POST http://localhost:4001/commands \
+  -d '{"type": "create", "payload": {"nodeType": "FRAME", "properties": {"name": "Card", "width": 320, "height": 200}}}'
+
+# Step 2: Set auto layout
+curl -X POST http://localhost:4001/commands \
+  -d '{"type": "setAutoLayout", "target": "CARD_ID", "payload": {"direction": "VERTICAL", "spacing": 12, "padding": 16}}'
+
+# Step 3: Modify children for FILL/HUG
+curl -X POST http://localhost:4001/commands \
+  -d '{"type": "modify", "target": "CHILD_ID", "payload": {"properties": {"layoutSizingHorizontal": "FILL"}}}'
+```
+
+### Python Script Pattern
+
+For multi-element creation with complex JSON payloads, use Python scripts instead of bash (avoids quoting issues with nested JSON):
+
+```python
+import requests, json
+
+def send(cmd):
+    r = requests.post("http://localhost:4001/commands", json=cmd)
+    cmd_id = r.json()["id"]
+    return requests.get(f"http://localhost:4001/results/{cmd_id}?wait=true").json()
+
+# Create parent frame
+result = send({"type": "create", "payload": {"nodeType": "FRAME", "properties": {"name": "Layout", "width": 400, "height": 300}}})
+frame_id = result["data"]["nodeId"]
+
+# Set auto layout
+send({"type": "setAutoLayout", "target": frame_id, "payload": {"direction": "VERTICAL", "spacing": 16}})
+```
+
+### Screenshot Verification
+
+After building layouts, always verify the result visually by exporting a screenshot:
+
+```bash
+curl -X POST http://localhost:4001/commands \
+  -d '{"type": "exportNode", "target": "FRAME_ID", "payload": {"format": "PNG", "scale": 1}}'
+```
 
 ## Workflow Slash Commands
 
@@ -587,7 +640,7 @@ pnpm build
 
 ## Security
 
-Claude Figma Bridge is a **localhost-only development tool**. Keep the following in mind:
+Bridge to Fig is a **localhost-only development tool**. Keep the following in mind:
 
 - **No authentication** — The bridge server binds to `localhost:4001` and is designed for local use only. Do not expose it to the network.
 - **Open CORS** — CORS is permissive by design so CLI tools (curl, Claude Code) can reach the server. This is safe on localhost but would be a risk if exposed externally.

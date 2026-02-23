@@ -24,7 +24,7 @@ cd bridge-server && pnpm dev &
 
 Poll `http://localhost:4001/health` until responsive.
 
-Remind user: **Please open the Figma plugin: Plugins → Development → Claude Figma Bridge**
+Remind user: **Please open the Figma plugin: Plugins → Development → Bridge to Fig**
 
 Send `ping` command to verify plugin connection. If no response after 15 seconds, prompt user again.
 

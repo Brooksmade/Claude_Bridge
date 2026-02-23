@@ -1,6 +1,6 @@
-# Claude Figma Bridge - Test Plan
+# Bridge to Fig - Test Plan
 
-> **Purpose**: Track all test scenarios for the Claude Figma Bridge. Each test validates that Claude can correctly interact with Figma using the established design system principles.
+> **Purpose**: Track all test scenarios for Bridge to Fig. Each test validates that Claude can correctly interact with Figma using the established design system principles.
 
 **Platform Compatibility**: Windows, macOS, Linux (anywhere Node.js runs)
 

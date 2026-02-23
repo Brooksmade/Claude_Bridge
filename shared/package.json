@@ -1,5 +1,5 @@
 {
-  "name": "@figma-claude-bridge/shared",
+  "name": "@bridge-to-fig/shared",
   "version": "1.0.0",
   "private": true,
   "type": "module",

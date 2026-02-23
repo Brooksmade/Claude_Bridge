@@ -23,7 +23,7 @@ function sendToUI(message: object): void {
 
 // Log to console, UI, and bridge server
 function log(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
-  console.log(`[Claude Bridge] ${message}`);
+  console.log(`[Bridge to Fig] ${message}`);
   sendToUI({ type: 'log', message, logType: type });
   submitLog(message, type);
 }
@@ -209,4 +209,4 @@ figma.on('close', () => {
 
 // Start the plugin
 startPolling();
-log('Claude Bridge plugin started');
+log('Bridge to Fig plugin started');

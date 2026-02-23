@@ -1,6 +1,6 @@
 # Figma Plugin API Gap Analysis
 
-This document compares the current Claude-Figma Bridge implementation against the full Figma Plugin API to identify missing commands.
+This document compares the current Bridge to Fig implementation against the full Figma Plugin API to identify missing commands.
 
 ## Summary (Updated: All Commands Implemented)
 

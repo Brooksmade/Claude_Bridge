@@ -1,5 +1,5 @@
 {
-  "name": "@figma-claude-bridge/plugin",
+  "name": "@bridge-to-fig/plugin",
   "version": "1.0.0",
   "private": true,
   "type": "module",

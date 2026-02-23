@@ -1,4 +1,4 @@
-import type { FigmaCommand, CommandResult } from '@figma-claude-bridge/shared';
+import type { FigmaCommand, CommandResult } from '@bridge-to-fig/shared';
 
 // In-memory storage for commands and results
 const pendingCommands: Map<string, FigmaCommand> = new Map();

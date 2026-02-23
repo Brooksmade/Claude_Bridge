@@ -1,8 +1,8 @@
-# Claude Code ↔ Figma Bridge Plugin
+# Bridge to Fig
 
 ## Project Brief & Implementation Guide
 
-**Current Version:** 1.2.0 | **Commands:** 136+ | **Last Updated:** January 2025
+**Current Version:** 1.2.0 | **Commands:** 136+ | **Last Updated:** January 2026
 
 > **Purpose:** This document contains all context needed to prompt Claude Code to build a real-time bridge between Claude Code and Figma, enabling conversational design creation on the Figma canvas.
 
@@ -218,7 +218,7 @@ figma.getLocalEffectStyles()
 ### 5.1 Directory Structure
 
 ```
-figma-claude-bridge/
+bridge-to-fig/
 ├── bridge-server/              # Node.js bridge server
 │   ├── src/
 │   │   ├── index.ts           # Entry point
@@ -448,7 +448,7 @@ When starting a new Claude Code session in the project folder, use this prompt:
 I'm building a Figma plugin bridge that allows Claude Code to create and
 manipulate objects on the Figma canvas in real-time.
 
-Read the project brief at ./Claude_Figma_Bridge_Project_Brief.md for full context.
+Read the project brief at ./Bridge_to_Fig_Project_Brief.md for full context.
 
 Then:
 1. Fetch the Figma Plugin API documentation from the URLs listed
@@ -508,7 +508,7 @@ Quick status check:
 ## Document Metadata
 
 - **Created:** 2024-12-29
-- **Updated:** 2025-01-02
+- **Updated:** 2026-01-02
 - **Purpose:** Project bootstrap document for Claude Code
-- **Project:** Claude ↔ Figma Bridge Plugin
+- **Project:** Bridge to Fig
 - **Version:** 1.2.0

@@ -1,5 +1,5 @@
 /**
- * @figma-claude-bridge/orchestrator
+ * @bridge-to-fig/orchestrator
  *
  * LLM-agnostic orchestrator for the Figma Bridge.
  * Lets any LLM with function calling drive the same bridge server.
