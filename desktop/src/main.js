@@ -1,13 +1,14 @@
 // Bridge to Fig Desktop — Status UI
 
 const HEALTH_URL = 'http://localhost:4001/health';
+const LOGS_URL = 'http://localhost:4001/logs';
 const POLL_INTERVAL = 2000;
-const MAX_LOG_ENTRIES = 10;
+const LOG_POLL_INTERVAL = 1000;
+const MAX_LOG_DISPLAY = 50;
 
 // State
 let lastHealthData = null;
-let logEntries = [];
-let previousPending = 0;
+let lastLogTimestamp = 0;
 
 // DOM elements
 const serverDot = document.getElementById('server-dot');
@@ -17,10 +18,10 @@ const pluginText = document.getElementById('plugin-text');
 const portValue = document.getElementById('port-value');
 const serverVersion = document.getElementById('server-version');
 const protocolVersion = document.getElementById('protocol-version');
-const pendingCommands = document.getElementById('pending-commands');
 const logEntriesEl = document.getElementById('log-entries');
 const btnClearLog = document.getElementById('btn-clear-log');
 const btnCheckUpdate = document.getElementById('btn-check-update');
+const btnDocs = document.getElementById('btn-docs');
 const updateStatus = document.getElementById('update-status');
 
 // Update server status indicators
@@ -41,48 +42,10 @@ function setPluginStatus(status) {
   if (status === 'connected') {
     pluginText.textContent = 'Connected';
   } else if (status === 'waiting') {
-    pluginText.textContent = 'Waiting for Plugin';
+    pluginText.textContent = 'Waiting';
   } else {
     pluginText.textContent = '--';
   }
-}
-
-// Add a log entry
-function addLogEntry(message, type) {
-  const now = new Date();
-  const time = now.toLocaleTimeString('en-US', {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
-  logEntries.unshift({ time, message, type });
-
-  // Keep only the most recent entries
-  if (logEntries.length > MAX_LOG_ENTRIES) {
-    logEntries = logEntries.slice(0, MAX_LOG_ENTRIES);
-  }
-
-  renderLog();
-}
-
-// Render log entries
-function renderLog() {
-  if (logEntries.length === 0) {
-    logEntriesEl.innerHTML = '<div class="log-empty">No activity yet</div>';
-    return;
-  }
-
-  logEntriesEl.innerHTML = logEntries
-    .map(
-      (entry) =>
-        `<div class="log-entry">
-          <span class="log-time">${entry.time}</span>
-          <span class="log-message ${entry.type || ''}">${escapeHtml(entry.message)}</span>
-        </div>`
-    )
-    .join('');
 }
 
 // Escape HTML to prevent XSS
@@ -90,6 +53,30 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Render log entries from server data
+function renderLog(logs) {
+  if (!logs || logs.length === 0) {
+    logEntriesEl.innerHTML = '<div class="log-empty">No activity yet</div>';
+    return;
+  }
+
+  // Show oldest first, newest at bottom (matches plugin scroll direction)
+  const display = logs.slice(-MAX_LOG_DISPLAY);
+
+  logEntriesEl.innerHTML = display
+    .map((entry) => {
+      const typeClass = entry.type === 'success' ? 'success' : entry.type === 'error' ? 'error' : '';
+      return `<div class="log-entry">
+        <span class="log-time">${escapeHtml(entry.time || '')}</span>
+        <span class="log-message ${typeClass}">${escapeHtml(entry.message)}</span>
+      </div>`;
+    })
+    .join('');
+
+  // Auto-scroll to bottom (newest entries) — matches plugin behavior
+  logEntriesEl.scrollTop = logEntriesEl.scrollHeight;
 }
 
 // Poll health endpoint
@@ -111,7 +98,7 @@ async function pollHealth() {
     // Update server status
     setServerStatus('running');
 
-    // Update plugin status based on long-poll tracking
+    // Update plugin status
     if (data.pluginConnected) {
       setPluginStatus('connected');
     } else {
@@ -121,81 +108,106 @@ async function pollHealth() {
     // Update info
     serverVersion.textContent = data.serverVersion || '--';
     protocolVersion.textContent = data.protocolVersion != null ? `v${data.protocolVersion}` : '--';
-    pendingCommands.textContent = data.pendingCommands != null ? data.pendingCommands : '--';
     portValue.textContent = '4001';
-
-    // Log pending command changes
-    if (data.pendingCommands > previousPending) {
-      addLogEntry(`Command queued (${data.pendingCommands} pending)`, 'success');
-    }
-    previousPending = data.pendingCommands || 0;
 
     // Check for update info from server
     if (data.latestRelease) {
-      updateStatus.innerHTML = `Update available: <a href="${escapeHtml(data.latestRelease.url)}" target="_blank">v${escapeHtml(data.latestRelease.version)}</a>`;
-      updateStatus.className = 'update-status available';
+      updateStatus.textContent = `Update available: v${data.latestRelease.version}`;
+      updateStatus.className = 'update-text available';
+      btnCheckUpdate.style.display = '';
     }
   } catch (err) {
     setServerStatus('stopped');
     setPluginStatus('');
     serverVersion.textContent = '--';
     protocolVersion.textContent = '--';
-    pendingCommands.textContent = '--';
 
-    if (lastHealthData !== null) {
-      addLogEntry('Server connection lost', 'error');
-      lastHealthData = null;
+    lastHealthData = null;
+  }
+}
+
+// Poll logs endpoint (mirrors plugin activity)
+async function pollLogs() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(`${LOGS_URL}?limit=${MAX_LOG_DISPLAY}`, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+    if (data.logs && data.logs.length > 0) {
+      const newestTimestamp = data.logs[data.logs.length - 1].timestamp;
+      // Only re-render if new entries arrived
+      if (newestTimestamp !== lastLogTimestamp) {
+        lastLogTimestamp = newestTimestamp;
+        renderLog(data.logs);
+      }
     }
+  } catch (err) {
+    // Server not reachable — health poll handles status display
   }
 }
 
 // Clear log button
-btnClearLog.addEventListener('click', () => {
-  logEntries = [];
-  renderLog();
+btnClearLog.addEventListener('click', async () => {
+  // Clear server-side logs and reset local state
+  try {
+    await fetch(LOGS_URL, { method: 'DELETE' });
+  } catch (err) {
+    // ignore
+  }
+  lastLogTimestamp = 0;
+  logEntriesEl.innerHTML = '<div class="log-empty">No activity yet</div>';
 });
 
-// Check for updates button
+// Documentation button
+btnDocs.addEventListener('click', () => {
+  if (window.__TAURI__) {
+    window.__TAURI__.shell.open('https://github.com/FermiDirak/Bridge-to-Fig#readme');
+  } else {
+    window.open('https://github.com/FermiDirak/Bridge-to-Fig#readme', '_blank');
+  }
+});
+
+// Check for updates / update button
 btnCheckUpdate.addEventListener('click', async () => {
   updateStatus.textContent = 'Checking...';
-  updateStatus.className = 'update-status';
+  updateStatus.className = 'update-text';
 
   try {
-    // Try to use Tauri updater if available
     if (window.__TAURI__) {
       const { check } = window.__TAURI__.updater;
       const update = await check();
       if (update) {
-        updateStatus.innerHTML = `Update available: v${update.version}`;
-        updateStatus.className = 'update-status available';
-        addLogEntry(`Update available: v${update.version}`, 'success');
+        updateStatus.textContent = `Update available: v${update.version}`;
+        updateStatus.className = 'update-text available';
+        btnCheckUpdate.style.display = '';
       } else {
         updateStatus.textContent = 'You are on the latest version';
-        setTimeout(() => {
-          updateStatus.textContent = '';
-        }, 5000);
+        btnCheckUpdate.style.display = 'none';
+        setTimeout(() => { updateStatus.textContent = ''; }, 5000);
       }
     } else {
-      // Fallback: check via server health
       if (lastHealthData && lastHealthData.latestRelease) {
-        updateStatus.innerHTML = `Update available: <a href="${escapeHtml(lastHealthData.latestRelease.url)}" target="_blank">v${escapeHtml(lastHealthData.latestRelease.version)}</a>`;
-        updateStatus.className = 'update-status available';
+        updateStatus.textContent = `Update available: v${lastHealthData.latestRelease.version}`;
+        updateStatus.className = 'update-text available';
       } else {
         updateStatus.textContent = 'You are on the latest version';
-        setTimeout(() => {
-          updateStatus.textContent = '';
-        }, 5000);
+        btnCheckUpdate.style.display = 'none';
+        setTimeout(() => { updateStatus.textContent = ''; }, 5000);
       }
     }
   } catch (err) {
     updateStatus.textContent = 'Failed to check for updates';
-    setTimeout(() => {
-      updateStatus.textContent = '';
-    }, 5000);
+    setTimeout(() => { updateStatus.textContent = ''; }, 5000);
   }
 });
 
 // Start polling
-addLogEntry('Bridge to Fig desktop started', 'success');
 pollHealth();
+pollLogs();
 setInterval(pollHealth, POLL_INTERVAL);
+setInterval(pollLogs, LOG_POLL_INTERVAL);

@@ -4,3 +4,5 @@ packages:
   - 'shared'
   - 'orchestrator'
   - 'desktop'
+onlyBuiltDependencies:
+  - esbuild

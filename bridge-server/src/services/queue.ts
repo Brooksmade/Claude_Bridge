@@ -21,8 +21,8 @@ interface RunningCommand {
 }
 let currentRunningCommand: RunningCommand | null = null;
 
-// Plugin connection tracking (long polling)
-let lastPollTimestamp: number = 0;
+// Plugin connection tracking (active long-poll connections)
+let activePollCount: number = 0;
 
 // Callbacks for real-time notifications
 type ResultCallback = (result: CommandResult) => void;
@@ -180,14 +180,18 @@ export const queue = {
     });
   },
 
-  // Record that the plugin polled (called from long poll route)
-  recordPluginPoll(): void {
-    lastPollTimestamp = Date.now();
+  // Track active long-poll connections
+  pollStarted(): void {
+    activePollCount++;
   },
 
-  // Check if plugin is connected (polled within last 60 seconds)
+  pollEnded(): void {
+    activePollCount = Math.max(0, activePollCount - 1);
+  },
+
+  // Plugin is connected if there's an active long-poll request
   isPluginConnected(): boolean {
-    return lastPollTimestamp > 0 && (Date.now() - lastPollTimestamp) < 60_000;
+    return activePollCount > 0;
   },
 
   // Get queue stats

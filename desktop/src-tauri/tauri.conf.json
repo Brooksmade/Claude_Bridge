@@ -30,7 +30,7 @@
     "externalBin": [
       "binaries/bridge-server"
     ],
-    "createUpdaterArtifacts": "v2Compatible",
+    "createUpdaterArtifacts": true,
     "windows": {
       "nsis": {
         "installMode": "perMachine"

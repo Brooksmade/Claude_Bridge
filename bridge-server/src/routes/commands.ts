@@ -159,13 +159,19 @@ router.get('/', (_req: Request, res: Response) => {
 // GET /commands/poll - Long polling for commands (called by Figma plugin)
 // This holds the connection open until a command arrives or timeout
 router.get('/poll', async (req: Request, res: Response) => {
+  queue.pollStarted();
+
+  // Detect client disconnect (plugin closed)
+  req.on('close', () => {
+    queue.pollEnded();
+  });
+
   try {
     const pluginProtocol = req.headers['x-plugin-protocol'] as string | undefined;
     if (pluginProtocol && parseInt(pluginProtocol, 10) < PROTOCOL_VERSION) {
       console.log(`[Commands] Plugin protocol v${pluginProtocol} < server v${PROTOCOL_VERSION}`);
     }
 
-    queue.recordPluginPoll();
     const timeout = parseInt(req.query.timeout as string) || 30000;
     const commands = await queue.waitForCommands(Math.min(timeout, 55000));
     res.json({ commands });

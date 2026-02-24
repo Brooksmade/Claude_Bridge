@@ -7,9 +7,11 @@ use sysinfo::System;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{
     image::Image,
-    menu::{MenuBuilder, MenuItemBuilder},
+    menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder},
     Manager, RunEvent, WindowEvent,
 };
+use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_shell::process::CommandChild;
 use tauri_plugin_shell::ShellExt;
 
@@ -19,6 +21,7 @@ const HEALTH_POLL_INTERVAL: Duration = Duration::from_secs(3);
 /// Health response from the bridge server
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct HealthResponse {
     status: String,
     #[serde(default)]
@@ -63,19 +66,14 @@ fn get_tray_icon(state: &ServerState) -> Image<'static> {
 /// Kill the sidecar process and any child processes (e.g., Chrome for Puppeteer)
 fn kill_process_tree(child: &mut Option<CommandChild>) {
     if let Some(child_process) = child.take() {
-        // Get the PID before killing
         let pid = child_process.pid();
-
-        // Kill the main process
         let _ = child_process.kill();
 
-        // Use sysinfo to find and kill child processes
         let mut sys = System::new();
         sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
         let parent_pid = sysinfo::Pid::from_u32(pid);
 
-        // Collect PIDs of child processes
         let child_pids: Vec<sysinfo::Pid> = sys
             .processes()
             .iter()
@@ -83,7 +81,6 @@ fn kill_process_tree(child: &mut Option<CommandChild>) {
             .map(|(pid, _)| *pid)
             .collect();
 
-        // Kill child processes
         for child_pid in child_pids {
             if let Some(process) = sys.process(child_pid) {
                 process.kill();
@@ -103,12 +100,30 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::AppleScript,
+            None,
+        ))
         .setup(move |app| {
             let handle = app.handle().clone();
+
+            // === Auto-start: enable by default on first run ===
+            let autolaunch = app.autolaunch();
+            let autostart_enabled = autolaunch.is_enabled().unwrap_or(false);
+            if !autostart_enabled {
+                // First run — enable auto-start
+                let _ = autolaunch.enable();
+                println!("[Tauri] Auto-start enabled (first run)");
+            }
+            let autostart_checked = autolaunch.is_enabled().unwrap_or(false);
 
             // === Build tray menu ===
             let show_status = MenuItemBuilder::with_id("show_status", "Show Status")
                 .build(app)?;
+            let launch_at_login =
+                CheckMenuItemBuilder::with_id("launch_at_login", "Launch at Login")
+                    .checked(autostart_checked)
+                    .build(app)?;
             let check_updates = MenuItemBuilder::with_id("check_updates", "Check for Updates")
                 .build(app)?;
             let quit = MenuItemBuilder::with_id("quit", "Quit Bridge to Fig")
@@ -116,6 +131,7 @@ pub fn run() {
 
             let menu = MenuBuilder::new(app)
                 .item(&show_status)
+                .item(&launch_at_login)
                 .separator()
                 .item(&check_updates)
                 .separator()
@@ -135,13 +151,24 @@ pub fn run() {
                             let _ = window.set_focus();
                         }
                     }
+                    "launch_at_login" => {
+                        let autolaunch = app.autolaunch();
+                        let currently_enabled = autolaunch.is_enabled().unwrap_or(false);
+                        if currently_enabled {
+                            let _ = autolaunch.disable();
+                            println!("[Tauri] Auto-start disabled by user");
+                        } else {
+                            let _ = autolaunch.enable();
+                            println!("[Tauri] Auto-start enabled by user");
+                        }
+                    }
                     "check_updates" => {
-                        // Open main window to check updates section
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
-                            // Trigger update check via JS
-                            let _ = window.eval("document.getElementById('btn-check-update')?.click()");
+                            let _ = window.eval(
+                                "document.getElementById('btn-check-update')?.click()",
+                            );
                         }
                     }
                     "quit" => {
@@ -170,19 +197,17 @@ pub fn run() {
             let shell_handle = handle.clone();
 
             match shell_handle.shell().sidecar("bridge-server") {
-                Ok(command) => {
-                    match command.spawn() {
-                        Ok((_, child)) => {
-                            if let Ok(mut guard) = sidecar_for_spawn.lock() {
-                                *guard = Some(child);
-                            }
-                            println!("[Tauri] Bridge server sidecar started");
+                Ok(command) => match command.spawn() {
+                    Ok((_, child)) => {
+                        if let Ok(mut guard) = sidecar_for_spawn.lock() {
+                            *guard = Some(child);
                         }
-                        Err(e) => {
-                            eprintln!("[Tauri] Failed to spawn sidecar: {}", e);
-                        }
+                        println!("[Tauri] Bridge server sidecar started");
                     }
-                }
+                    Err(e) => {
+                        eprintln!("[Tauri] Failed to spawn sidecar: {}", e);
+                    }
+                },
                 Err(e) => {
                     eprintln!("[Tauri] Failed to create sidecar command: {}", e);
                 }
@@ -211,7 +236,6 @@ pub fn run() {
                         None => ServerState::Stopped,
                     };
 
-                    // Update tray icon only if state changed
                     if new_state != last_state {
                         let icon = get_tray_icon(&new_state);
                         let tooltip = match &new_state {
@@ -231,7 +255,6 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Hide window instead of closing it (tray app behavior)
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let _ = window.hide();
                 api.prevent_close();
@@ -239,12 +262,10 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(move |app_handle, event| {
+        .run(move |_app_handle, event| {
             if let RunEvent::ExitRequested { .. } = &event {
-                // Signal health thread to stop
                 should_quit.store(true, Ordering::Relaxed);
 
-                // Kill sidecar process tree
                 if let Ok(mut guard) = sidecar_child.lock() {
                     kill_process_tree(&mut guard);
                     println!("[Tauri] Sidecar process tree terminated");
