@@ -3,3 +3,4 @@ packages:
   - 'figma-plugin'
   - 'shared'
   - 'orchestrator'
+  - 'desktop'

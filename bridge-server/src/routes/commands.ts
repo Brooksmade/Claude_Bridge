@@ -165,6 +165,7 @@ router.get('/poll', async (req: Request, res: Response) => {
       console.log(`[Commands] Plugin protocol v${pluginProtocol} < server v${PROTOCOL_VERSION}`);
     }
 
+    queue.recordPluginPoll();
     const timeout = parseInt(req.query.timeout as string) || 30000;
     const commands = await queue.waitForCommands(Math.min(timeout, 55000));
     res.json({ commands });

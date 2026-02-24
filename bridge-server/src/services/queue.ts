@@ -21,6 +21,9 @@ interface RunningCommand {
 }
 let currentRunningCommand: RunningCommand | null = null;
 
+// Plugin connection tracking (long polling)
+let lastPollTimestamp: number = 0;
+
 // Callbacks for real-time notifications
 type ResultCallback = (result: CommandResult) => void;
 type CommandCallback = (command: FigmaCommand) => void;
@@ -177,11 +180,22 @@ export const queue = {
     });
   },
 
+  // Record that the plugin polled (called from long poll route)
+  recordPluginPoll(): void {
+    lastPollTimestamp = Date.now();
+  },
+
+  // Check if plugin is connected (polled within last 60 seconds)
+  isPluginConnected(): boolean {
+    return lastPollTimestamp > 0 && (Date.now() - lastPollTimestamp) < 60_000;
+  },
+
   // Get queue stats
-  getStats(): { pendingCommands: number; storedResults: number } {
+  getStats(): { pendingCommands: number; storedResults: number; pluginConnected: boolean } {
     return {
       pendingCommands: pendingCommands.size,
       storedResults: commandResults.size,
+      pluginConnected: this.isPluginConnected(),
     };
   },
 

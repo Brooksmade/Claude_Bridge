@@ -37,6 +37,7 @@ app.get('/health', (_req, res) => {
     status: 'ok',
     timestamp: Date.now(),
     wsClients: getConnectedClients(),
+    pluginConnected: stats.pluginConnected,
     pendingCommands: stats.pendingCommands,
     storedResults: stats.storedResults,
     serverVersion: APP_VERSION,

@@ -1,0 +1,176 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────
+  # Stage 1: Build bridge-server standalone binary per platform
+  # ─────────────────────────────────────────────────────────
+  build-sidecar:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target-triple: x86_64-pc-windows-msvc
+            pkg-target: node18-win-x64
+            ext: .exe
+          - os: ubuntu-22.04
+            target-triple: x86_64-unknown-linux-gnu
+            pkg-target: node18-linux-x64
+            ext: ''
+          - os: macos-latest
+            target-triple: aarch64-apple-darwin
+            pkg-target: node18-macos-arm64
+            ext: ''
+          - os: macos-13
+            target-triple: x86_64-apple-darwin
+            pkg-target: node18-macos-x64
+            ext: ''
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @bridge-to-fig/shared build
+
+      - name: Bundle bridge-server with esbuild
+        run: pnpm --filter @bridge-to-fig/server bundle
+
+      - name: Compile sidecar binary with pkg
+        run: |
+          npx --yes @yao-pkg/pkg \
+            bridge-server/dist/bundle.cjs \
+            --target ${{ matrix.pkg-target }} \
+            --output bridge-server-${{ matrix.target-triple }}${{ matrix.ext }} \
+            --compress GZip
+
+      - name: Upload sidecar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidecar-${{ matrix.target-triple }}
+          path: bridge-server-${{ matrix.target-triple }}${{ matrix.ext }}
+          if-no-files-found: error
+
+  # ─────────────────────────────────────────────────────────
+  # Stage 2: Build Tauri app per platform
+  # ─────────────────────────────────────────────────────────
+  build-tauri:
+    needs: build-sidecar
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target-triple: x86_64-pc-windows-msvc
+            rust-target: x86_64-pc-windows-msvc
+            ext: .exe
+          - os: ubuntu-22.04
+            target-triple: x86_64-unknown-linux-gnu
+            rust-target: x86_64-unknown-linux-gnu
+            ext: ''
+          - os: macos-latest
+            target-triple: aarch64-apple-darwin
+            rust-target: aarch64-apple-darwin
+            ext: ''
+          - os: macos-13
+            target-triple: x86_64-apple-darwin
+            rust-target: x86_64-apple-darwin
+            ext: ''
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download sidecar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sidecar-${{ matrix.target-triple }}
+          path: desktop/src-tauri/binaries/
+
+      - name: Prepare sidecar binary
+        shell: bash
+        run: |
+          cd desktop/src-tauri/binaries
+          # Tauri expects: binaries/{name}-{target-triple}{ext}
+          # The artifact is already named correctly from the build stage
+          # Make executable on Unix
+          if [ "${{ matrix.ext }}" = "" ]; then
+            chmod +x bridge-server-${{ matrix.target-triple }}
+          fi
+          ls -la
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: desktop
+          tauriScript: pnpm tauri
+          args: --target ${{ matrix.rust-target }}
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Bridge to Fig ${{ github.ref_name }}'
+          releaseBody: |
+            See the [CHANGELOG](https://github.com/Brooksmade/Bridge-to-Fig/blob/main/CHANGELOG.md) for details.
+          releaseDraft: true
+          prerelease: false

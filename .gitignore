@@ -6,6 +6,11 @@ dist/
 bridge-server/dist/
 figma-plugin/dist/
 
+# Tauri build artifacts
+desktop/src-tauri/target/
+desktop/src-tauri/binaries/
+!desktop/src-tauri/binaries/.gitkeep
+
 # Environment variables
 .env
 .env.*

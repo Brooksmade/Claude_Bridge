@@ -1,0 +1,21 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for Bridge to Fig",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "args": true,
+          "name": "binaries/bridge-server",
+          "sidecar": true
+        }
+      ]
+    },
+    "shell:allow-kill",
+    "updater:default",
+    "process:default"
+  ]
+}

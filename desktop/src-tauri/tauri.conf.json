@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Bridge to Fig",
+  "identifier": "com.bridgetofig.desktop",
+  "version": "1.0.0",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Bridge to Fig",
+        "visible": false,
+        "width": 420,
+        "height": 520,
+        "resizable": false,
+        "center": true
+      }
+    ],
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon-32x32.png",
+      "icons/icon-128x128.png",
+      "icons/icon-256x256.png",
+      "icons/icon.png"
+    ],
+    "externalBin": [
+      "binaries/bridge-server"
+    ],
+    "createUpdaterArtifacts": "v2Compatible",
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "REPLACE_WITH_PUBLIC_KEY",
+      "endpoints": [
+        "https://github.com/Brooksmade/Bridge-to-Fig/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
