@@ -30,7 +30,7 @@ jobs:
             target-triple: aarch64-apple-darwin
             pkg-target: node18-macos-arm64
             ext: ''
-          - os: macos-13
+          - os: macos-14
             target-triple: x86_64-apple-darwin
             pkg-target: node18-macos-x64
             ext: ''
@@ -61,6 +61,7 @@ jobs:
         run: pnpm --filter @bridge-to-fig/server bundle
 
       - name: Compile sidecar binary with pkg
+        shell: bash
         run: |
           npx --yes @yao-pkg/pkg \
             bridge-server/dist/bundle.cjs \
@@ -96,7 +97,7 @@ jobs:
             target-triple: aarch64-apple-darwin
             rust-target: aarch64-apple-darwin
             ext: ''
-          - os: macos-13
+          - os: macos-14
             target-triple: x86_64-apple-darwin
             rust-target: x86_64-apple-darwin
             ext: ''
