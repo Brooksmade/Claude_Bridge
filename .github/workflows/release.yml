@@ -172,7 +172,7 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'Bridge to Fig ${{ github.ref_name }}'
           releaseBody: |
-            See the [CHANGELOG](https://github.com/Brooksmade/Bridge-to-Fig/blob/main/CHANGELOG.md) for details.
+            See the [documentation](https://github.com/Brooksmade/Bridge-to-Fig#readme) for details.
           releaseDraft: true
           prerelease: true
 
