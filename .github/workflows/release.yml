@@ -174,4 +174,68 @@ jobs:
           releaseBody: |
             See the [CHANGELOG](https://github.com/Brooksmade/Bridge-to-Fig/blob/main/CHANGELOG.md) for details.
           releaseDraft: true
-          prerelease: false
+          prerelease: true
+
+  # ─────────────────────────────────────────────────────────
+  # Stage 3: Rename release assets to user-friendly names
+  # ─────────────────────────────────────────────────────────
+  rename-assets:
+    needs: build-tauri
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rename release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          REPO="${{ github.repository }}"
+          API="https://api.github.com/repos/${REPO}"
+
+          # Find the release by tag
+          RELEASE=$(curl -sf -H "Authorization: token ${GITHUB_TOKEN}" "${API}/releases/tags/${TAG}")
+          RELEASE_ID=$(echo "${RELEASE}" | jq -r '.id')
+
+          # Define rename map: pattern → new name
+          declare -A RENAME_MAP=(
+            ["_x64-setup.exe"]="Bridge-to-Fig-Windows-${VERSION}.exe"
+            ["_x64-setup.exe.sig"]="Bridge-to-Fig-Windows-${VERSION}.exe.sig"
+            ["_aarch64.dmg"]="Bridge-to-Fig-macOS-ARM64-${VERSION}.dmg"
+            ["_aarch64.dmg.sig"]="Bridge-to-Fig-macOS-ARM64-${VERSION}.dmg.sig"
+            ["_x64.dmg"]="Bridge-to-Fig-macOS-Intel-${VERSION}.dmg"
+            ["_x64.dmg.sig"]="Bridge-to-Fig-macOS-Intel-${VERSION}.dmg.sig"
+            ["_amd64.deb"]="Bridge-to-Fig-Linux-${VERSION}.deb"
+            ["_amd64.deb.sig"]="Bridge-to-Fig-Linux-${VERSION}.deb.sig"
+            ["_amd64.AppImage"]="Bridge-to-Fig-Linux-${VERSION}.AppImage"
+            ["_amd64.AppImage.sig"]="Bridge-to-Fig-Linux-${VERSION}.AppImage.sig"
+            ["-1.x86_64.rpm"]="Bridge-to-Fig-Linux-${VERSION}.rpm"
+            ["-1.x86_64.rpm.sig"]="Bridge-to-Fig-Linux-${VERSION}.rpm.sig"
+            ["_amd64.AppImage.tar.gz"]="Bridge-to-Fig-Linux-${VERSION}.AppImage.tar.gz"
+            ["_amd64.AppImage.tar.gz.sig"]="Bridge-to-Fig-Linux-${VERSION}.AppImage.tar.gz.sig"
+          )
+
+          # Get all assets and rename
+          echo "${RELEASE}" | jq -c '.assets[] | {id: .id, name: .name}' | while read -r ASSET; do
+            ASSET_ID=$(echo "${ASSET}" | jq -r '.id')
+            ASSET_NAME=$(echo "${ASSET}" | jq -r '.name')
+
+            NEW_NAME=""
+            for PATTERN in "${!RENAME_MAP[@]}"; do
+              if [[ "${ASSET_NAME}" == *"${PATTERN}" ]]; then
+                NEW_NAME="${RENAME_MAP[${PATTERN}]}"
+                break
+              fi
+            done
+
+            if [ -n "${NEW_NAME}" ] && [ "${NEW_NAME}" != "${ASSET_NAME}" ]; then
+              echo "Renaming: ${ASSET_NAME} → ${NEW_NAME}"
+              curl -sf -X PATCH \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "{\"name\": \"${NEW_NAME}\"}" \
+                "${API}/releases/assets/${ASSET_ID}" > /dev/null
+            fi
+          done
+
+          echo "Asset renaming complete"

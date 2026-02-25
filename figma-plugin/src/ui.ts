@@ -140,9 +140,75 @@ versionBannerDismissEl.addEventListener('click', () => {
   versionBannerEl.classList.remove('visible');
 });
 
-// Download button — open GitHub releases page
-downloadBtnEl.addEventListener('click', () => {
-  parent.postMessage({ pluginMessage: { type: 'openExternal', url: 'https://github.com/Brooksmade/Bridge-to-Fig/releases' } }, '*');
+// Download button — detect OS and download correct installer
+type OSType = 'windows' | 'mac-arm' | 'mac-intel' | 'linux' | 'unknown';
+
+function detectOS(): OSType {
+  const ua = navigator.userAgent.toLowerCase();
+  const platform = navigator.platform.toLowerCase();
+
+  if (platform.startsWith('win') || ua.includes('windows')) {
+    return 'windows';
+  }
+  if (platform.startsWith('mac') || ua.includes('macintosh')) {
+    // Check for Apple Silicon — navigator.platform is "MacIntel" even on ARM under Rosetta,
+    // but we can check GL renderer for Apple GPU as a strong signal
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') as WebGLRenderingContext | null;
+      if (gl) {
+        const ext = gl.getExtension('WEBGL_debug_renderer_info');
+        if (ext) {
+          const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+          if (typeof renderer === 'string' && /apple/i.test(renderer)) {
+            return 'mac-arm';
+          }
+        }
+      }
+    } catch (_) { /* fall through */ }
+    return 'mac-arm'; // Default to ARM — most modern Macs
+  }
+  if (platform.startsWith('linux') || ua.includes('linux')) {
+    return 'linux';
+  }
+  return 'unknown';
+}
+
+function assetPatternForOS(os: OSType): RegExp {
+  switch (os) {
+    case 'windows':   return /Windows.*\.exe$/i;
+    case 'mac-arm':   return /macOS-ARM64.*\.dmg$/i;
+    case 'mac-intel': return /macOS-Intel.*\.dmg$/i;
+    case 'linux':     return /Linux.*\.deb$/i;
+    default:          return /./; // match anything
+  }
+}
+
+const detectedOS = detectOS();
+const osLabels: Record<OSType, string> = {
+  'windows':   'Download for Windows',
+  'mac-arm':   'Download for macOS',
+  'mac-intel': 'Download for macOS (Intel)',
+  'linux':     'Download for Linux',
+  'unknown':   'Download',
+};
+downloadBtnEl.textContent = osLabels[detectedOS];
+
+downloadBtnEl.addEventListener('click', async () => {
+  downloadBtnEl.textContent = 'Fetching...';
+  try {
+    const resp = await fetch('https://api.github.com/repos/Brooksmade/Bridge-to-Fig/releases/latest');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const release = await resp.json();
+    const pattern = assetPatternForOS(detectedOS);
+    const asset = release.assets?.find((a: { name: string }) => pattern.test(a.name) && !a.name.endsWith('.sig'));
+    const url = asset?.browser_download_url || release.html_url;
+    parent.postMessage({ pluginMessage: { type: 'openExternal', url } }, '*');
+  } catch (_) {
+    // Fallback to releases page
+    parent.postMessage({ pluginMessage: { type: 'openExternal', url: 'https://github.com/Brooksmade/Bridge-to-Fig/releases' } }, '*');
+  }
+  downloadBtnEl.textContent = osLabels[detectedOS];
 });
 
 // Error filter toggle
