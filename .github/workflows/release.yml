@@ -181,6 +181,7 @@ jobs:
   # ─────────────────────────────────────────────────────────
   rename-assets:
     needs: build-tauri
+    if: ${{ !cancelled() && needs.build-tauri.result != 'failure' }}
     runs-on: ubuntu-latest
     steps:
       - name: Rename release assets
@@ -193,9 +194,17 @@ jobs:
           REPO="${{ github.repository }}"
           API="https://api.github.com/repos/${REPO}"
 
-          # Find the release by tag
-          RELEASE=$(curl -sf -H "Authorization: token ${GITHUB_TOKEN}" "${API}/releases/tags/${TAG}")
+          # Draft releases aren't on /releases/tags/ — query all releases and filter
+          RELEASE=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
+            "${API}/releases" | jq -c ".[] | select(.tag_name == \"${TAG}\")" | head -1)
+
+          if [ -z "${RELEASE}" ]; then
+            echo "No release found for tag ${TAG}"
+            exit 0
+          fi
+
           RELEASE_ID=$(echo "${RELEASE}" | jq -r '.id')
+          echo "Found release ID: ${RELEASE_ID} for tag ${TAG}"
 
           # Define rename map: pattern → new name
           declare -A RENAME_MAP=(
@@ -230,7 +239,7 @@ jobs:
 
             if [ -n "${NEW_NAME}" ] && [ "${NEW_NAME}" != "${ASSET_NAME}" ]; then
               echo "Renaming: ${ASSET_NAME} → ${NEW_NAME}"
-              curl -sf -X PATCH \
+              curl -s -X PATCH \
                 -H "Authorization: token ${GITHUB_TOKEN}" \
                 -H "Content-Type: application/json" \
                 -d "{\"name\": \"${NEW_NAME}\"}" \
