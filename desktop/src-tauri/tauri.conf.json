@@ -39,7 +39,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "REPLACE_WITH_PUBLIC_KEY",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU0OUNBMEJGRTZFRUVFMTQKUldRVTd1N212NkNjVktiUndkT3RCRElrVysyWXVnNzdZRHFWZEErTCszY1dHb09IZWVMWGVOTXQK",
       "endpoints": [
         "https://github.com/Brooksmade/Bridge-to-Fig/releases/latest/download/latest.json"
       ],
