@@ -174,15 +174,6 @@ function detectOS(): OSType {
   return 'unknown';
 }
 
-function assetPatternForOS(os: OSType): RegExp {
-  switch (os) {
-    case 'windows':   return /Windows.*\.exe$/i;
-    case 'mac-arm':   return /macOS-ARM64.*\.dmg$/i;
-    case 'mac-intel': return /macOS-Intel.*\.dmg$/i;
-    case 'linux':     return /Linux.*\.deb$/i;
-    default:          return /./; // match anything
-  }
-}
 
 const detectedOS = detectOS();
 const osLabels: Record<OSType, string> = {
@@ -194,21 +185,19 @@ const osLabels: Record<OSType, string> = {
 };
 downloadBtnEl.textContent = osLabels[detectedOS];
 
-downloadBtnEl.addEventListener('click', async () => {
-  downloadBtnEl.textContent = 'Fetching...';
-  try {
-    const resp = await fetch('https://api.github.com/repos/Brooksmade/Bridge-to-Fig/releases/latest');
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const release = await resp.json();
-    const pattern = assetPatternForOS(detectedOS);
-    const asset = release.assets?.find((a: { name: string }) => pattern.test(a.name) && !a.name.endsWith('.sig'));
-    const url = asset?.browser_download_url || release.html_url;
-    parent.postMessage({ pluginMessage: { type: 'openExternal', url } }, '*');
-  } catch (_) {
-    // Fallback to releases page
-    parent.postMessage({ pluginMessage: { type: 'openExternal', url: 'https://github.com/Brooksmade/Bridge-to-Fig/releases' } }, '*');
-  }
-  downloadBtnEl.textContent = osLabels[detectedOS];
+// Direct download URLs — no API call needed, works in Figma's sandbox
+const DOWNLOAD_BASE = 'https://github.com/Brooksmade/Bridge-to-Fig/releases/latest/download';
+const downloadUrls: Record<OSType, string> = {
+  'windows':   `${DOWNLOAD_BASE}/Bridge-to-Fig-Windows.exe`,
+  'mac-arm':   `${DOWNLOAD_BASE}/Bridge-to-Fig-macOS-ARM64.dmg`,
+  'mac-intel': `${DOWNLOAD_BASE}/Bridge-to-Fig-macOS-Intel.dmg`,
+  'linux':     `${DOWNLOAD_BASE}/Bridge-to-Fig-Linux.deb`,
+  'unknown':   'https://github.com/Brooksmade/Bridge-to-Fig/releases',
+};
+
+downloadBtnEl.addEventListener('click', () => {
+  const url = downloadUrls[detectedOS];
+  parent.postMessage({ pluginMessage: { type: 'openExternal', url } }, '*');
 });
 
 // Error filter toggle

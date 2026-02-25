@@ -174,7 +174,7 @@ jobs:
           releaseBody: |
             See the [documentation](https://github.com/Brooksmade/Bridge-to-Fig#readme) for details.
           releaseDraft: true
-          prerelease: true
+          prerelease: false
 
   # ─────────────────────────────────────────────────────────
   # Stage 3: Rename release assets to user-friendly names
@@ -206,22 +206,22 @@ jobs:
           RELEASE_ID=$(echo "${RELEASE}" | jq -r '.id')
           echo "Found release ID: ${RELEASE_ID} for tag ${TAG}"
 
-          # Define rename map: pattern → new name
+          # Define rename map: pattern → new name (no version in name so /latest/download/ works)
           declare -A RENAME_MAP=(
-            ["_x64-setup.exe"]="Bridge-to-Fig-Windows-${VERSION}.exe"
-            ["_x64-setup.exe.sig"]="Bridge-to-Fig-Windows-${VERSION}.exe.sig"
-            ["_aarch64.dmg"]="Bridge-to-Fig-macOS-ARM64-${VERSION}.dmg"
-            ["_aarch64.dmg.sig"]="Bridge-to-Fig-macOS-ARM64-${VERSION}.dmg.sig"
-            ["_x64.dmg"]="Bridge-to-Fig-macOS-Intel-${VERSION}.dmg"
-            ["_x64.dmg.sig"]="Bridge-to-Fig-macOS-Intel-${VERSION}.dmg.sig"
-            ["_amd64.deb"]="Bridge-to-Fig-Linux-${VERSION}.deb"
-            ["_amd64.deb.sig"]="Bridge-to-Fig-Linux-${VERSION}.deb.sig"
-            ["_amd64.AppImage"]="Bridge-to-Fig-Linux-${VERSION}.AppImage"
-            ["_amd64.AppImage.sig"]="Bridge-to-Fig-Linux-${VERSION}.AppImage.sig"
-            ["-1.x86_64.rpm"]="Bridge-to-Fig-Linux-${VERSION}.rpm"
-            ["-1.x86_64.rpm.sig"]="Bridge-to-Fig-Linux-${VERSION}.rpm.sig"
-            ["_amd64.AppImage.tar.gz"]="Bridge-to-Fig-Linux-${VERSION}.AppImage.tar.gz"
-            ["_amd64.AppImage.tar.gz.sig"]="Bridge-to-Fig-Linux-${VERSION}.AppImage.tar.gz.sig"
+            ["_x64-setup.exe"]="Bridge-to-Fig-Windows.exe"
+            ["_x64-setup.exe.sig"]="Bridge-to-Fig-Windows.exe.sig"
+            ["_aarch64.dmg"]="Bridge-to-Fig-macOS-ARM64.dmg"
+            ["_aarch64.dmg.sig"]="Bridge-to-Fig-macOS-ARM64.dmg.sig"
+            ["_x64.dmg"]="Bridge-to-Fig-macOS-Intel.dmg"
+            ["_x64.dmg.sig"]="Bridge-to-Fig-macOS-Intel.dmg.sig"
+            ["_amd64.deb"]="Bridge-to-Fig-Linux.deb"
+            ["_amd64.deb.sig"]="Bridge-to-Fig-Linux.deb.sig"
+            ["_amd64.AppImage"]="Bridge-to-Fig-Linux.AppImage"
+            ["_amd64.AppImage.sig"]="Bridge-to-Fig-Linux.AppImage.sig"
+            ["-1.x86_64.rpm"]="Bridge-to-Fig-Linux.rpm"
+            ["-1.x86_64.rpm.sig"]="Bridge-to-Fig-Linux.rpm.sig"
+            ["_amd64.AppImage.tar.gz"]="Bridge-to-Fig-Linux.AppImage.tar.gz"
+            ["_amd64.AppImage.tar.gz.sig"]="Bridge-to-Fig-Linux.AppImage.tar.gz.sig"
           )
 
           # Get all assets and rename
