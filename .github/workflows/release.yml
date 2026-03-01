@@ -173,6 +173,8 @@ jobs:
           releaseName: 'Bridge to Fig ${{ github.ref_name }}'
           releaseBody: |
             See the [documentation](https://github.com/Brooksmade/Bridge-to-Fig#readme) for details.
+
+            > **Windows users:** You may see a SmartScreen warning — click "More info" then "Run anyway". The app is open-source and safe to install.
           releaseDraft: true
           prerelease: false
 

@@ -165,10 +165,11 @@ btnClearLog.addEventListener('click', async () => {
 
 // Documentation button
 btnDocs.addEventListener('click', () => {
-  if (window.__TAURI__) {
-    window.__TAURI__.shell.open('https://github.com/FermiDirak/Bridge-to-Fig#readme');
+  const url = 'https://github.com/Brooksmade/Bridge-to-Fig#readme';
+  if (window.__TAURI__ && window.__TAURI__.core) {
+    window.__TAURI__.core.invoke('plugin:shell|open', { path: url });
   } else {
-    window.open('https://github.com/FermiDirak/Bridge-to-Fig#readme', '_blank');
+    window.open(url, '_blank');
   }
 });
 
